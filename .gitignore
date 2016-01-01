@@ -2,9 +2,8 @@
 .idea/
 
 # my ignores
-prework/*.sql
-prework/*.db
-prework/qurantext
+db.sqlite3
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -55,9 +55,9 @@ def tag_words(diffs):
             a.append(('- ', diff[2:]))
 
         elif diff.startswith('? '):
-            if diffs[i-1].startswith(''):
+            if diffs[i - 1].startswith(''):
                 pass
-    print_func_output(tag_words, s1=a, s2=b)
+    # print_func_output(tag_words, s1=a, s2=b)
     return a, b
 
 
@@ -99,8 +99,6 @@ def main():
     print(s2)
     print(s11)
     print(s22)
-
-
 
 
 if __name__ == '__main__':

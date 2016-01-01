@@ -5,7 +5,7 @@ def select_verse_range(table, surah_no, verse_start, verse_end):
     if table is None:
         table = 'quran_simple_clean'
 
-    conn = sqlite3.connect('../../db.sqlite3')
+    conn = sqlite3.connect('temp.db')
     dbcursor = conn.cursor()
     select_command = "SELECT verse FROM {} WHERE surah_no=? AND verse_no>=? AND verse_no<=?".format(table)
     parameters = [surah_no, verse_start, verse_end]
