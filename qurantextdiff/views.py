@@ -1,5 +1,8 @@
 from django.shortcuts import render
 
+from .models import QuranNonDiacritic
+from .helpers import MockInputs
+
 
 def index_view(request):
     return render(request, 'qurantextdiff/index.html')
@@ -9,12 +12,17 @@ def index_view(request):
 def details_view(request):
     surah_no = request.POST.get('surah_no', None)
     verse_start = request.POST.get('verse_start', None)
-    # verse_end = request.POST.get('verse_end', None)
-    verses = prework.DBQueries.select_verse_range(None, surah_no, verse_start, verse_start)
+    verse_end = request.POST.get('verse_end', None)
 
-    mock_inputs = prework.MockInputs.random_mod(verses)
+    query_result = QuranNonDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
 
-    (original_text, input_text) = prework.StringDiff.compare(verses, mock_inputs)
-    contextData = prework.StringDiff.create_diff_html(original_text, input_text)
+    original_text = [q.verse for q in query_result]
+    mock_inputs = MockInputs.create_mock_inputs(original_text)
 
-    return render(request, 'qurantextdiff/details.html', contextData)
+    diffs = []
+    for i, orig in enumerate(original_text):
+        diff_tuple = original_text[i], mock_inputs[i]
+        diffs.append(diff_tuple)
+
+    return render(request, 'qurantextdiff/details.html', {'diffs': diffs})
+

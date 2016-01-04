@@ -1,8 +1,11 @@
+{% load staticfiles %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Home</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/bootstrap.css' %}">
 </head>
 
 <body>
@@ -38,7 +41,7 @@
     </table>
     </p>
 
-    <input type="submit" value="Test run">
+    <input type="submit" value="Test run" class="btn-danger">
 </form>
 </body>
 </html>

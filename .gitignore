@@ -3,7 +3,7 @@
 
 # my ignores
 db.sqlite3
-
+python_testbed
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
