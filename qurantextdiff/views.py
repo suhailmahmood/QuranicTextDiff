@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from .models import QuranNonDiacritic
-from .helpers import MockInputs
+from .helpers import MockInputs, Diff
 
 
 def index_view(request):
@@ -19,10 +19,9 @@ def details_view(request):
     original_text = [q.verse for q in query_result]
     mock_inputs = MockInputs.create_mock_inputs(original_text)
 
-    diffs = []
-    for i, orig in enumerate(original_text):
-        diff_tuple = original_text[i], mock_inputs[i]
-        diffs.append(diff_tuple)
+    results = Diff.compare(original_text, mock_inputs)
+    diff_table = Diff.create_diff_html(results)
+    print(diff_table)
 
-    return render(request, 'qurantextdiff/details.html', {'diffs': diffs})
+    return render(request, 'qurantextdiff/details.html', {'difftable': diff_table})
 

@@ -1,39 +1,83 @@
 import difflib
 
-_table_template = """\
-<table class="diff">
-    {rows}
-</table>"""
+
+_css_class_diff_added = 'alert-success'
+_css_class_diff_deleted = 'alert-danger'
+_css_class_diff_changed = 'diff_changed'
+# _css_class_diff_added = 'diff_added'
+# _css_class_diff_deleted = 'diff_deleted'
+# _css_class_diff_changed = 'diff_changed'
+
+_span_tag_template = """<span class="{difftype}">{word}</span>"""
 
 _row_template = """\
-<tr>
-        <td>{data}</td>
-    </tr>"""
+    <tr>
+        <td>{original_data}</td>
+        <td>{input_data}</td>
+    </tr>\
+"""
+
+_table_template = """\
+<table class="table table-striped table-bordered table-hover">
+{rows}
+</table>\
+"""
 
 
-def compare(s1, s2):
+def compare(original_lines, input_lines):
     """
-    :param s1: list of strings to be compared against, the target
-    :param s2: list of strings which is compared to s1, the input
-    :rtype: list of tuples containing the each compared strings pair, with each word tagged
+    <code>original_lines</code>: list(str), list of strings to be compared against, the target
+    <code>input_lines</code>: list(str), list of strings which is compared to s1, the input
+    return: list of tuples containing the each compared strings pair, with each word tagged
+    The returned structure is like below:
+    <code>[
+        ( # this is a line, combination of both target line and input line
+            [('+ ', 'one'), ('- ', 'two'), ...more words], [('+ ', 'four'), ('- ', 'tow'), ...more words]
+        ),
+        ( # this is another line
+            [('+ ', 'ten'), ('- ', 'nine'), ...more words], [('+ ', 'seven'), ('- ', 'eight'), ...more words]
+        ),
+        ...
+        more lines as tuples
+    ]</code>
     """
-    assert len(s1) == len(s2)
+    assert len(original_lines) == len(input_lines)
 
     tagged_lines = []
-    d = difflib.Differ()
+    differ = difflib.Differ()
 
-    for orig, inp in zip(s1, s2):
-        diff = list(d.compare(orig, inp))
-        tagged_lines.append(_tag_words(diff))
-
+    for original_line, input_line in zip(original_lines, input_lines):
+        diff = list(differ.compare(original_line.split(), input_line.split()))
+        tagged_lines.append(_diff_to_tagged_words(diff))
     return tagged_lines
 
 
-def create_diff_html():
-    pass
+def _create_html_row(row_tuples):
+    html_row = []
+    for elem in row_tuples:
+        if elem[0] == "  ":
+            html_row.append(elem[1])
+        if elem[0] == "+ ":
+            html_row.append(_span_tag_template.format(difftype=_css_class_diff_added, word=elem[1]))
+        if elem[0] == "- ":
+            html_row.append(_span_tag_template.format(difftype=_css_class_diff_deleted, word=elem[1]))
+        if elem[0] == "? ":
+            pass
+
+    return ' '.join(html_row)
 
 
-def _tag_words(diffs):
+def create_diff_html(tagged_lines):
+    rows = []
+    for line_pair in tagged_lines:
+        original_line_html = _create_html_row(line_pair[0])
+        input_line_html = _create_html_row(line_pair[1])
+        rows.append(_row_template.format(original_data=original_line_html, input_data=input_line_html))
+
+    return _table_template.format(rows='\n'.join(rows))
+
+
+def _diff_to_tagged_words(diffs):
     a, b = [], []
     for i, diff in enumerate(diffs):
 
@@ -48,58 +92,33 @@ def _tag_words(diffs):
             a.append(('- ', diff[2:]))
 
         elif diff.startswith('? '):
-            if diffs[i - 1].startswith(''):
-                pass
-    # print_func_output(tag_words, s1=a, s2=b)
+            pass
+            # a.append(('? ', diff[2:]))
     return a, b
 
 
-def print_raw_diff(diffs):
-    print("In function: ----------- {} -----------".format(print_func_output.__name__))
-    for diff in diffs:
-        if diff.endswith('\n'):
-            print(diff, end='')
-        else:
-            print(diff)
+def diff_structure_print():
+    s1 = ["firstword secondword thirdword", "1stword 2ndward"]
+    s2 = ["firstward secendord thirdword", "1stword 2ndrad"]
 
+    result = compare(s1, s2)
+    print(result)
 
-def print_func_output(function, **kwargs):
-    print("In function: ----------- {} -----------".format(function.__name__))
-    for arg in kwargs:
-        arg_type = type(kwargs[arg])
-        if arg_type is list:
-            print("{}:\t{}".format(arg, kwargs[arg]))
-        elif arg_type is dict:
-            print(arg)
-            for e in kwargs[arg]:
-                print("\t{}: {}".format(e, kwargs[arg][e]))
-    print()
+    print("\nlevel1")
+    for level1 in result:
+        print(level1)
 
-
-def describe_diff(diffs):
-    desc = {'added': [], 'deleted': [], 'changed': [], 'unchanged': []}
-    for i, diff in enumerate(diffs):
-        if diff.startswith('- '):
-            desc['deleted'].append(diff[2:])
-        elif diff.startswith('+ '):
-            desc['added'].append(diff[2:])
-        elif diff.startswith('? '):
-            desc['changed'].append(diff[2:])
-        elif diff.startswith('  '):
-            desc['unchanged'].append(diff[2:])
-
-    print_func_output(describe_diff, description=desc)
-    return desc
-
-
-def main():
-    # s1 = "one  thre twoo one"
-    # s2 = "one towo tree"
-    s1 = ["one three five nine eleven", "one three five nine eleven", "one three five nine eleven"]
-    s2 = ["one four five  nine elevan", "one four five  nine elevan", "one four five  nine elevan"]
-
-    # s11, s22 = compare(s1, s2)
+    print("\nlevel2")
+    for level1 in result:
+        for level2 in level1:
+            print(level2)
 
 
 if __name__ == '__main__':
-    main()
+    s1 = ["firstword secondword thirdword", "1stword 2ndward"]
+    s2 = ["firstward secendord thirdword", "1stword 2ndrad"]
+
+    result = compare(s1, s2)
+
+    html = create_diff_html(result)
+    print(html)

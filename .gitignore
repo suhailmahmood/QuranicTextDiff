@@ -3,7 +3,12 @@
 
 # my ignores
 db.sqlite3
-python_testbed
+qurantextdiff/helpers/assets/
+qurantextdiff/helpers/*.html
+qurantextdiff/static/qurantextdiff/css/bootstrap.css
+qurantextdiff/static/qurantextdiff/js/bootstrap.js
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,23 +5,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Details</title>
-{#    <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/bootstrap.css' %}">#}
+    <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/css/bootstrap.min.css' %}">
 </head>
 
 <body>
-
-<textarea>{{ original_text }}</textarea>
-<textarea>{{ input_text }}</textarea>
-
-<table border="1" width="80%">
-    {% for diff in diffs %}
-        <tr>
-            <td> {{ diff.0 }}</td>
-            <td> {{ diff.1 }}</td>
-        </tr>
-    {% endfor %}
-
-</table>
+{% autoescape off %}
+{{ difftable }}
+{% endautoescape %}
 
 </body>
 </html>
