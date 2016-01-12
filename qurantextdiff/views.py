@@ -21,7 +21,5 @@ def details_view(request):
 
     results = Diff.compare(original_text, mock_inputs)
     diff_table = Diff.create_diff_html(results)
-    print(diff_table)
 
     return render(request, 'qurantextdiff/details.html', {'difftable': diff_table})
-
