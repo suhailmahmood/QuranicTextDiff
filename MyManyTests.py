@@ -10,7 +10,7 @@ def random_mod_string(input_string, change_word=0.8, change_char=0.3):
             # and modifying it with a random character in [0x0627, 0x0645]
             for j in range(len(word)):
                 if random.random() < change_char:
-                    word = word[:j] + random.choice(string.ascii_letters+string.digits) + word[j + 1:]
+                    word = word[:j] + random.choice(string.ascii_letters + string.digits) + word[j + 1:]
 
             word_list[i] = word
 
@@ -41,5 +41,24 @@ def check_difflib_ratio():
     print('Minimum ratio which difflib considers as "change" is: {}'.format(min_ratio))
 
 
+def see_arabic_chars_unicode():
+    """
+    Arabic character set ranges from 0600–06FF in unicode.
+    """
+    import unicodedata
+    absent = 0
+    present = 0
+    for i in range(0x0600, 0x06FF+1):
+        try:
+            print('i={} \t{}: {}'.format(i, chr(i), unicodedata.name(chr(i))))
+            present += 1
+        except ValueError:
+            absent += 1
+    else:
+        print('\nTotal present: {}'.format(present))
+        print('\nTotal absent: {}'.format(absent))
+
+
 if __name__ == '__main__':
-    check_difflib_ratio()
+    # check_difflib_ratio()
+    see_arabic_chars_unicode()

@@ -7,15 +7,21 @@
     <title>Details</title>
     <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/css/bootstrap.min.css' %}">
     <style>
-        .diff {
+        .diff-column {
             font-size: 1.3em;
+            width: 45%;
+        }
+
+        .id-column {
+            width: 10%;
         }
     </style>
 </head>
 
 <body>
+
 {% autoescape off %}
-{{ difftable }}
+    {{ difftable }}
 {% endautoescape %}
 
 </body>
