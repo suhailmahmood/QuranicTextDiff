@@ -1,8 +1,10 @@
 """
-
 This script is used to compare Quranic texts with/without diacritics, using the python module <code>difflib</code>
 
-The <code>compare()</code> function returns a structure like below:
+1. The <code>compare()</code> function returns a structure like below (which is a list of tuples, each tuple being a
+line, having two lists one for original and the other for the input, each list having as many tuples as there are
+words in that line, each tuple having two elements, one being a tag from '+ ', '- ', and '? ', and the other the
+word itself):
 <code>[
     ( # this is a line, combination of both target line and input line
         [('+ ', 'one'), ('- ', 'two'), ...more words], [('+ ', 'four'), ('- ', 'tow'), ...more words]
@@ -14,7 +16,7 @@ The <code>compare()</code> function returns a structure like below:
     more lines as tuples
 ]</code>
 
- - The function to create html contents creates html with Bootstrap styling.
+2. The function to create html contents creates html with Bootstrap styling.
 """
 
 import difflib
@@ -72,7 +74,7 @@ def _create_html_row(row_tuples):
     return ' '.join(html_row)
 
 
-def create_diff_html(tagged_lines):
+def create_diff_html(tagged_lines, identity):
     rows = []
     for line_pair in tagged_lines:
         original_line_html = _create_html_row(line_pair[0])
@@ -118,17 +120,19 @@ def diff_structure_print():
         for level2 in level1:
             print(level2)
 
+    html_differ = difflib.HtmlDiff()
+    html = html_differ.make_file(s1, s2)
+
+    with open('outfile.html', 'w') as outfile:
+        outfile.write(html)
+
 
 if __name__ == '__main__':
-    s1 = ["firstword secondword thirdword", "1stword 2ndward", "onhnred"]
-    s2 = ["firstward secendord thirdword", "1stword 2ndrad", "oneundred"]
+    s1 = ['one-hundred', 'one-hunred', 'one-hundre', 'one-hundred', 'one-hundred']
+    s2 = ['one-hundre', 'one-hundrel', 'one-hundred', 'one-hundrel', 'one-hunrel']
 
-    # differ = difflib.Differ()
-    # result = list(differ.compare([s1[2]], [s2[2]]))
-    # import random
-    # # random.s
-    # s = difflib.SequenceMatcher(None, s1[2], s2[2])
-    # print(s.ratio())
-    #
-    # for r in result:
-    #     print(r)
+    differ = difflib.Differ()
+    for s1elem, s2elem in zip(s1, s2):
+        result = list(differ.compare([s1elem], [s2elem]))
+        for r in result:
+            print(r)
