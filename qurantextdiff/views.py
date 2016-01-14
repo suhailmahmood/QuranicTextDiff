@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
+from .helpers import MockInputs, QuranTextDiff, Preprocess
 from .models import QuranNonDiacritic
-from .helpers import MockInputs, QuranTextDiff
 
 
 def index_view(request):
@@ -17,10 +17,13 @@ def details_view(request):
     query_result = QuranNonDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
 
     original_text = [q.verse for q in query_result]
-    mock_inputs = MockInputs.create_mock_inputs(original_text)
+    input_text = MockInputs.create_mock_inputs(original_text)
+
+    preprocessed_input = Preprocess.preprocess_input(input_text)
+
     identities = [(surah_no, v_no) for v_no in range(int(verse_start), int(verse_end)+1)]
 
-    results = QuranTextDiff.compare(original_text, mock_inputs)
+    results = QuranTextDiff.compare(original_text, input_text)
     diff_table = QuranTextDiff.create_diff_html(results, identities)
 
     return render(request, 'qurantextdiff/details.html', {'difftable': diff_table})

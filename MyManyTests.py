@@ -48,9 +48,9 @@ def see_arabic_chars_unicode():
     import unicodedata
     absent = 0
     present = 0
-    for i in range(0x0600, 0x06FF+1):
+    for i in range(0x0600, 0x06FF + 1):
         try:
-            print('i={} \t{}: {}'.format(i, chr(i), unicodedata.name(chr(i))))
+            print('{:04X} \t{} --> {}'.format(i, unicodedata.name(chr(i)), chr(i)))
             present += 1
         except ValueError:
             absent += 1
@@ -59,6 +59,37 @@ def see_arabic_chars_unicode():
         print('\nTotal absent: {}'.format(absent))
 
 
+def test_pre_processors():
+    import sqlite3
+    from qurantextdiff.helpers.Preprocess import Cleaner, Splitter
+
+    db = sqlite3.connect('db.sqlite3')
+    cursor = db.cursor()
+    cursor.execute('SELECT verse FROM quran_non_diacritic')
+    rows = cursor.fetchall()
+
+    l = []
+    for row in rows:
+        l.append(row[0])
+
+    input_text = '\n'.join(l)
+
+    splitter = Splitter(input_text)
+    split_rows = splitter.get_split_lines()
+
+    cleaner = Cleaner(split_rows)
+    cleaned_lines = cleaner.get_cleaned_lines()
+
+    mismatch = 0
+    for (row, cl) in zip(rows, cleaned_lines):
+        row = row[0].replace('\n', '')
+        if row != cl:
+            mismatch += 1
+
+    print('No. of mismatch (after running pre-processing on the source in database): {}'.format(mismatch))
+
+
 if __name__ == '__main__':
     # check_difflib_ratio()
-    see_arabic_chars_unicode()
+    # see_arabic_chars_unicode()
+    test_pre_processors()
