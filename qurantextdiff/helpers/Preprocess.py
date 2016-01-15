@@ -57,32 +57,3 @@ class Cleaner:
         for junk in self.__junk_characters:
             for i in range(length):
                 self.__input_lines[i].replace(junk, '')
-
-
-if __name__ == '__main__':
-    import sqlite3
-
-    db = sqlite3.connect('../../db.sqlite3')
-    cursor = db.cursor()
-    cursor.execute('select verse from quran_non_diacritic')
-    rows = cursor.fetchall()
-
-    l = []
-    for row in rows:
-        l.append(row[0])
-
-    input_text = '\n'.join(l)
-
-    splitter = Splitter(input_text)
-    split_rows = splitter.get_split_lines()
-
-    cleaner = Cleaner(split_rows)
-    cleaned_lines = cleaner.get_cleaned_lines()
-
-    mismatch = 0
-    for (row, cl) in zip(rows, cleaned_lines):
-        row = row[0].replace('\n', '')
-        if row != cl:
-            mismatch += 1
-
-    print('No of mismatch: {}'.format(mismatch))

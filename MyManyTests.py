@@ -1,24 +1,22 @@
-def random_mod_string(input_string, change_word=0.8, change_char=0.3):
-    import random, string
-
-    word_list = input_string.split()
-
-    # selecting any word at random for modification within the word
-    for i, word in enumerate(word_list):
-        if random.random() < change_word:
-            # selecting any index within the word at random,
-            # and modifying it with a random character in [0x0627, 0x0645]
-            for j in range(len(word)):
-                if random.random() < change_char:
-                    word = word[:j] + random.choice(string.ascii_letters + string.digits) + word[j + 1:]
-
-            word_list[i] = word
-
-    return ' '.join(word_list)
-
-
 def check_difflib_ratio():
-    import string, random, difflib
+    """
+    Finds the minimum value of SequenceMatcher.ratio() for two strings such that Differ considers them as 'changed'.
+    """
+    import difflib
+    import random
+    import string
+
+    def random_modify_string(input_string, change_word=0.5, change_char=0.3):
+        word_list = input_string.split()
+        for i, word in enumerate(word_list):
+            if random.random() < change_word:
+                for j in range(len(word)):
+                    if random.random() < change_char:
+                        word = word[:j] + random.choice(string.printable) + word[j + 1:]
+
+                word_list[i] = word
+
+        return ' '.join(word_list)
 
     differ = difflib.Differ()
     min_ratio = 1.0
@@ -26,7 +24,7 @@ def check_difflib_ratio():
     for count in range(1000):
         length = random.randint(5, 100)
         s1 = ''.join(random.SystemRandom().choice(string.printable) for _ in range(length))
-        s2 = random_mod_string(s1)
+        s2 = random_modify_string(s1)
 
         sm = difflib.SequenceMatcher(None, s1, s2)
         ratio = sm.ratio()
@@ -92,4 +90,10 @@ def test_pre_processors():
 if __name__ == '__main__':
     # check_difflib_ratio()
     # see_arabic_chars_unicode()
-    test_pre_processors()
+    # test_pre_processors()
+    list1 = [1,2,3,4]
+    list2 = [11,22,33,44,55]
+    list3 = [111,222,333,444,555, 666]
+
+    for l1, l2, l3 in zip(list1, list2, list3):
+        print('{}, {}, {}'.format(l1, l2, l3))
