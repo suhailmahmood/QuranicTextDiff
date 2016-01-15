@@ -42,7 +42,7 @@ def load_initial_data(apps, schema_editor):
                 verse_counter = 1
                 continue
             else:
-                objs.append(AppModel(surah_no=surah_counter, verse_no=verse_counter, verse=line))
+                objs.append(AppModel(surah_no=surah_counter, verse_no=verse_counter, verse=line.replace('\n', '')))
                 verse_counter += 1
 
         AppModel.objects.bulk_create(objs)

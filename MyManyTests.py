@@ -87,13 +87,26 @@ def test_pre_processors():
     print('No. of mismatch (after running pre-processing on the source in database): {}'.format(mismatch))
 
 
+def check_verses_in_db():
+    import sqlite3
+
+    db = sqlite3.connect('db.sqlite3')
+    cursor = db.cursor()
+    cursor.execute('SELECT verse FROM quran_diacritic')
+    rows = cursor.fetchall()
+
+    counter = 0
+    verse_count = 0
+    for row in rows:
+        verse_count += 1
+        if row[0].find('\n') > -1:
+            counter += 1
+
+    print('No. of newline found: {} in {} verses'.format(counter, verse_count))
+
+
 if __name__ == '__main__':
     # check_difflib_ratio()
     # see_arabic_chars_unicode()
     # test_pre_processors()
-    list1 = [1,2,3,4]
-    list2 = [11,22,33,44,55]
-    list3 = [111,222,333,444,555, 666]
-
-    for l1, l2, l3 in zip(list1, list2, list3):
-        print('{}, {}, {}'.format(l1, l2, l3))
+    check_verses_in_db()
