@@ -59,7 +59,7 @@ def see_arabic_chars_unicode():
 
 def test_pre_processors():
     import sqlite3
-    from qurantextdiff.helpers.Preprocess import Cleaner, Splitter
+    from qurantextdiff.helpers.textprocess import Cleaner, Splitter
 
     db = sqlite3.connect('db.sqlite3')
     cursor = db.cursor()
@@ -87,7 +87,7 @@ def test_pre_processors():
     print('No. of mismatch (after running pre-processing on the source in database): {}'.format(mismatch))
 
 
-def check_verses_in_db():
+def check_verses_in_db_for_newlines():
     import sqlite3
 
     db = sqlite3.connect('db.sqlite3')
@@ -105,8 +105,43 @@ def check_verses_in_db():
     print('No. of newline found: {} in {} verses'.format(counter, verse_count))
 
 
+def test_remove_diacritic():
+    import sqlite3
+    from qurantextdiff.helpers import textprocess
+
+    db = sqlite3.connect('db.sqlite3')
+    cursor = db.cursor()
+
+    cursor.execute('SELECT * FROM quran_non_diacritic')
+    quran_non_diacritic_rows = cursor.fetchall()
+
+    cursor.execute('SELECT * FROM quran_diacritic')
+    quran_diacritic_rows = cursor.fetchall()
+
+    verses_diacritic = [row[3] for row in quran_diacritic_rows]
+    diac_surah = [row[1] for row in quran_diacritic_rows]
+    diac_verse = [row[2] for row in quran_diacritic_rows]
+    verses_non_diacritic = [row[3] for row in quran_non_diacritic_rows]
+
+    verses_diacritic_cleaned = textprocess.remove_diacritics(verses_diacritic)
+
+    mismatches = []
+    import difflib
+    for v_nodiac, v_diac_cleaned, surah, verse in zip(verses_non_diacritic, verses_diacritic_cleaned, diac_surah, diac_verse):
+        try:
+            assert v_nodiac == v_diac_cleaned
+        except AssertionError:
+            mismatches.append('{}:{}\n{}\n{}\n\n'.format(surah, verse, v_nodiac, v_diac_cleaned))
+            # print(mismatches[-1])
+
+    with open('mismatches.txt', 'w', encoding='utf-8') as outfile:
+        outfile.write(''.join(mismatches))
+
+
 if __name__ == '__main__':
     # check_difflib_ratio()
     # see_arabic_chars_unicode()
     # test_pre_processors()
-    check_verses_in_db()
+    # check_verses_in_db_for_newlines()
+    # arabic_text_diacritic_diff()
+    test_remove_diacritic()

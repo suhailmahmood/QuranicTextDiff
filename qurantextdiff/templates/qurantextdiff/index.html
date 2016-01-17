@@ -16,6 +16,11 @@
 
 <form action="details/" method="post">
     {% csrf_token %}
+
+    <label for="user_input">Input text:</label>
+    <textarea name="user_input"></textarea>
+
+
     <p>
         <label for="surah_no">Surah: </label>
         <input type="text" name="surah_no" width="100">
@@ -47,6 +52,7 @@
     <input type="submit" value="Test run" class="btn btn-default">
 </form>
 
+<hr>
 
 </body>
 </html>

@@ -47,8 +47,8 @@ class HtmlCreator:
         rows = []
         for orig_ln_tgd, inp_ln_tgd, identity in zip(self.original_lines_tagged, self.input_lines_tagged,
                                                      self.identities):
-            original_line_html = self.__create_html_row(orig_ln_tgd)
-            input_line_html = self.__create_html_row(inp_ln_tgd)
+            original_line_html = self._create_html_row(orig_ln_tgd)
+            input_line_html = self._create_html_row(inp_ln_tgd)
             identity_string = '{}:{}'.format(identity[0], identity[1])
 
             rows.append(_row_template.format(
@@ -58,7 +58,7 @@ class HtmlCreator:
             )
         return _table_template.format(rows='\n'.join(rows))
 
-    def __create_html_row(self, tagged_line):
+    def _create_html_row(self, tagged_line):
         """
         Creates html for a single row in any of the two data columns (original or input)
         """
