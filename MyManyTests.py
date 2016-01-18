@@ -137,6 +137,8 @@ def test_remove_diacritic():
     with open('mismatches.txt', 'w', encoding='utf-8') as outfile:
         outfile.write(''.join(mismatches))
 
+    print('No. of mismatch lines found: {}'.format(len(mismatches)))
+
 
 if __name__ == '__main__':
     # check_difflib_ratio()

@@ -71,6 +71,6 @@ def remove_diacritics(input_lines):
 
     non_diacritic_lines = []
     for line in input_lines:
-        non_diacritic_lines.append(''.join(c for c in unicodedata.normalize('NFD', line)
+        non_diacritic_lines.append(''.join(c for c in unicodedata.normalize('NFC', line)
                                            if unicodedata.category(c) != 'Mn'))
     return non_diacritic_lines
