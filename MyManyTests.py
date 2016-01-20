@@ -63,14 +63,10 @@ def test_pre_processors():
 
     db = sqlite3.connect('db.sqlite3')
     cursor = db.cursor()
-    cursor.execute('SELECT verse FROM quran_non_diacritic')
-    rows = cursor.fetchall()
+    cursor.execute('SELECT verse FROM quran_diacritic')
+    rows = [row[0] for row in cursor.fetchall()]
 
-    l = []
-    for row in rows:
-        l.append(row[0])
-
-    input_text = '\n'.join(l)
+    input_text = '\n'.join(rows)
 
     splitter = Splitter(input_text)
     split_rows = splitter.get_split_lines()
@@ -80,29 +76,10 @@ def test_pre_processors():
 
     mismatch = 0
     for (row, cl) in zip(rows, cleaned_lines):
-        row = row[0].replace('\n', '')
         if row != cl:
             mismatch += 1
 
     print('No. of mismatch (after running pre-processing on the source in database): {}'.format(mismatch))
-
-
-def check_verses_in_db_for_newlines():
-    import sqlite3
-
-    db = sqlite3.connect('db.sqlite3')
-    cursor = db.cursor()
-    cursor.execute('SELECT verse FROM quran_diacritic')
-    rows = cursor.fetchall()
-
-    counter = 0
-    verse_count = 0
-    for row in rows:
-        verse_count += 1
-        if row[0].find('\n') > -1:
-            counter += 1
-
-    print('No. of newline found: {} in {} verses'.format(counter, verse_count))
 
 
 def test_remove_diacritic():
@@ -126,8 +103,8 @@ def test_remove_diacritic():
     verses_diacritic_cleaned = textprocess.remove_diacritics(verses_diacritic)
 
     mismatches = []
-    import difflib
-    for v_nodiac, v_diac_cleaned, surah, verse in zip(verses_non_diacritic, verses_diacritic_cleaned, diac_surah, diac_verse):
+    for v_nodiac, v_diac_cleaned, surah, verse in zip(verses_non_diacritic, verses_diacritic_cleaned, diac_surah,
+                                                      diac_verse):
         try:
             assert v_nodiac == v_diac_cleaned
         except AssertionError:
@@ -137,13 +114,40 @@ def test_remove_diacritic():
     with open('mismatches.txt', 'w', encoding='utf-8') as outfile:
         outfile.write(''.join(mismatches))
 
+    print('Testing: "{}()"'.format(test_remove_diacritic.__name__))
+    print('Comparing non-diacritic verses with diacritic ones with their\ndiacritics removed'
+          ' using "remove_diacritic()" function...')
     print('No. of mismatch lines found: {}'.format(len(mismatches)))
+
+
+def test_diff_result_diacritic():
+    import difflib
+
+    with open('sample_input.txt', 'r', encoding='utf-8') as input_file:
+        inputs = input_file.readlines()
+    s1 = [inputs[0].replace('\n', '')]
+    s2 = [inputs[1].replace('\n', '')]
+    differ = difflib.Differ()
+    diffs = list(differ.compare(s1, s2))
+
+    for diff in diffs:
+        print(diff)
+    import unicodedata
+    for i in range(len(diffs)):
+        if diffs[i].startswith('? '):
+            guide_word = diffs[i][2:]
+            word = diffs[i-1][2:]
+            for index in range(len(guide_word)):
+                guide = guide_word[index]
+                if guide == '-' or guide == '^' or guide == '+':
+                    # print('{} {}'.format(guide, index))
+                    print(unicodedata.name(word[index]))
 
 
 if __name__ == '__main__':
     # check_difflib_ratio()
     # see_arabic_chars_unicode()
     # test_pre_processors()
-    # check_verses_in_db_for_newlines()
-    # arabic_text_diacritic_diff()
-    test_remove_diacritic()
+    # test_remove_diacritic()
+    test_diff_result_diacritic()
+

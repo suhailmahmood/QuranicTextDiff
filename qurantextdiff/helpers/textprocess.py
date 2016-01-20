@@ -43,7 +43,8 @@ class Cleaner:
     def __init__(self, input_lines):
         self._input_lines = []
         for line in input_lines:
-            self._input_lines.append(' '.join(line.split()))
+            # clean any double white-spaces, splitting to words, then stripping
+            self._input_lines.append(' '.join(word.strip() for word in line.split()))
 
     def get_cleaned_lines(self):
         self._clean_input_lines()
@@ -53,7 +54,44 @@ class Cleaner:
         length = len(self._input_lines)
         for junk in self._junk_characters:
             for i in range(length):
-                self._input_lines[i].replace(unicodedata.lookup(junk), '')
+                self._input_lines[i] = self._input_lines[i].replace(unicodedata.lookup(junk), '')
+
+
+def remove_diacritics(text):
+    import unicodedata
+
+    def _remove_diacritics(line):
+        return ''.join(c for c in unicodedata.normalize('NFC', line) if unicodedata.category(c) != 'Mn')
+
+    if isinstance(text, str):
+        return _remove_diacritics(text)
+    if isinstance(text, list):
+        input_lines_without_diacritics = []
+        for s in text:
+            input_lines_without_diacritics.append(_remove_diacritics(s))
+        return input_lines_without_diacritics
+
+
+def normalize(text):
+    replacement_set = {
+        unicodedata.lookup('ARABIC LETTER ALEF WASLA'): unicodedata.lookup('ARABIC LETTER ALEF'),
+        unicodedata.lookup('ARABIC LETTER SUPERSCRIPT ALEF'): unicodedata.lookup('ARABIC LETTER ALEF'),
+        unicodedata.lookup('ARABIC LETTER SUPERSCRIPT ALEF'): unicodedata.lookup('ARABIC LETTER ALEF'),
+        unicodedata.lookup('ARABIC LETTER ALEF') + unicodedata.lookup('ARABIC SUKUN'): unicodedata.lookup(
+            'ARABIC LETTER ALEF'),
+        unicodedata.lookup('ARABIC LETTER ALEF WITH MADDA ABOVE'): unicodedata.lookup('ARABIC LETTER ALEF')
+    }
+
+    def _normalize_line(line):
+        assert isinstance(line, str)
+        for key in replacement_set.keys():
+            line = line.replace(key, replacement_set.get(key))
+        return line
+
+    if isinstance(text, list):
+        return [_normalize_line(s) for s in text]
+    elif isinstance(text, str):
+        return _normalize_line(text)
 
 
 def preprocess_input(user_input):
@@ -64,13 +102,3 @@ def preprocess_input(user_input):
     cleaned_input_lines = cleaner.get_cleaned_lines()
 
     return cleaned_input_lines
-
-
-def remove_diacritics(input_lines):
-    import unicodedata
-
-    non_diacritic_lines = []
-    for line in input_lines:
-        non_diacritic_lines.append(''.join(c for c in unicodedata.normalize('NFC', line)
-                                           if unicodedata.category(c) != 'Mn'))
-    return non_diacritic_lines

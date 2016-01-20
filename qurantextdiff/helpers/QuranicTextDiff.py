@@ -15,6 +15,7 @@ lines.
 """
 
 import difflib
+import qurantextdiff.helpers.textprocess as textprocess
 
 _css_class_diff_added = 'alert-success'
 _css_class_diff_deleted = 'alert-danger'
@@ -91,10 +92,103 @@ def compare(original_lines, input_lines):
 
     for original_line, input_line in zip(original_lines, input_lines):
         diff = list(differ.compare(original_line.split(), input_line.split()))
-        olt, ilt = _diff_to_tagged_words(diff)
+        olt, ilt = _diff_to_tagged_words_diacritic(diff)
         original_lines_tagged.append(olt)
         input_lines_tagged.append(ilt)
     return original_lines_tagged, input_lines_tagged
+
+
+def _diff_to_tagged_words_diacritic(diffs):
+    # has to consider the case when the difflib's compare considers two strings to be completely different
+    # hence represents the situation as a 'deletion' and then an 'addition'.
+    # Can be done by either of these:
+    #       1. setting difflib to work with a custom ratio
+    #       2. determining in 'diffs' the words currently being compared, and then checking
+    #          with 'is_change_significant()' function
+    original_line_tagged, input_line_tagged = [], []
+    length = len(diffs)
+
+    i = 0
+    while i < length:
+        if diffs[i].startswith('  '):
+            original_line_tagged.append(('  ', diffs[i][2:]))
+            input_line_tagged.append(('  ', diffs[i][2:]))
+        # elif diffs[i].startswith('+ '):
+        #     input_line_tagged.append(('+ ', diffs[i][2:]))
+        elif diffs[i].startswith('- '):
+            try:
+                if diffs[i + 1].startswith('? ') and diffs[i + 2].startswith('+ '):
+                    print('first if')
+                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+2][2:])
+                    print('significant? {}'.format(significant_change))
+                    if significant_change:
+                        original_line_tagged.append(('? ', diffs[i][2:]))
+                        input_line_tagged.append(('? ', diffs[i + 2][2:]))
+                    else:
+                        original_line_tagged.append(('  ', diffs[i][2:]))
+                        input_line_tagged.append(('  ', diffs[i + 2][2:]))
+                    i += 2
+                elif diffs[i + 1].startswith('+ ') and diffs[i + 2].startswith('? '):
+                    print('first elif')
+                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                    print('significant? {}'.format(significant_change))
+
+                    if significant_change:
+                        original_line_tagged.append(('? ', diffs[i][2:]))
+                        input_line_tagged.append(('? ', diffs[i + 1][2:]))
+                    else:
+                        original_line_tagged.append(('  ', diffs[i][2:]))
+                        input_line_tagged.append(('  ', diffs[i + 1][2:]))
+                    i += 2
+                else:
+                    print('else')
+                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                    print('significant? {}'.format(significant_change))
+
+                    if significant_change:
+                        original_line_tagged.append(('? ', diffs[i][2:]))
+                        input_line_tagged.append(('? ', diffs[i+1][2:]))
+                    else:
+                        original_line_tagged.append(('  ', diffs[i][2:]))
+                        input_line_tagged.append(('  ', diffs[i+1][2:]))
+            except IndexError:
+                original_line_tagged.append(('- ', diffs[i][2:]))
+        # this part is handled in the above elif branch
+        elif diffs[i].startswith('? '):
+            pass
+
+        i += 1
+
+    return original_line_tagged, input_line_tagged
+
+
+def _is_change_significant(original_text, input_text):
+
+    # original_text_without_diacritic = textprocess.normalize(original_text)
+    # input_text_without_diacritic = textprocess.normalize(input_text)
+
+    # if original_text_without_diacritic != input_text_without_diacritic:
+    #     return True
+
+    original_text_normalized = textprocess.normalize(original_text)
+    input_text_normalized = textprocess.normalize(input_text)
+
+    print(original_text_normalized)
+    print(input_text_normalized)
+    print('')
+
+    differ = difflib.Differ()
+    diffs = list(differ.compare([original_text_normalized], [input_text_normalized]))
+
+    guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
+    for i, guide_line in enumerate(guide_lines):
+        for index, guide in enumerate(guide_line):
+            # this is simplest check: if any diacritic is changed (^), or added (+)
+            # this considers the diacritic version against which the input is compared to be "completely" diacritic
+            if guide == '^' or guide == '+':
+                return True
+
+    return False
 
 
 def _diff_to_tagged_words(diffs):
@@ -136,40 +230,3 @@ def _diff_to_tagged_words(diffs):
         i += 1
 
     return original_line_tagged, input_line_tagged
-
-
-def diff_structure_print():
-    s1 = ["firstword secondword thirdword", "1stword 2ndward"]
-    s2 = ["firstward secendord thirdword", "1stword 2ndrad"]
-
-    result = compare(s1, s2)
-    print(result)
-
-    print("\nlevel1")
-    for level1 in result:
-        print(level1)
-
-    print("\nlevel2")
-    for level1 in result:
-        for level2 in level1:
-            print(level2)
-
-    # html_differ = difflib.HtmlDiff()
-    # html = html_differ.make_file(s1, s2)
-    #
-    # with open('outfile.html', 'w') as outfile:
-    #     outfile.write(html)
-
-
-if __name__ == '__main__':
-    s1 = ['one-hundred', 'one-hunred', 'twothousand', 'one-hundre', 'one-hundred', 'one-hundred']
-    s2 = ['one-hundre', 'one-hundrel', 'onhundred', 'one-hundred', 'one-hundrel', 'one-hunrel']
-
-    # differ = difflib.Differ()
-    # # for s1elem, s2elem in zip(s1, s2):
-    # result = list(differ.compare(s1, s2))
-    # for r in result:
-    #     print(r)
-    result = compare(s1, s2)
-    for r in result:
-        print(r)
