@@ -21,27 +21,28 @@ def details_view(request):
     verse_start = request.POST.get('verse_start', None)
     verse_end = request.POST.get('verse_end', None)
 
-    if not user_input1:
-        query_result = QuranNonDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
+    # if not user_input1:
+    #     query_result = QuranNonDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
+    #
+    #     original_text_lines = [q.verse for q in query_result]
+    #     input_text = MockInputs.create_mock_inputs(original_text_lines)
+    #
+    #     # preprocessed_input_lines = Preprocess.preprocess_input(input_text)
+    #
+    #     identities = [(surah_no, v_no) for v_no in range(int(verse_start), int(verse_end) + 1)]
+    #
+    #     original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text_lines, input_text)
+    #     html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, identities)
+    #     diff_table = html_differ.create_diff_html()
 
-        original_text = [q.verse for q in query_result]
-        input_text = MockInputs.create_mock_inputs(original_text)
-
-        # preprocessed_input = Preprocess.preprocess_input(input_text)
-
-        identities = [(surah_no, v_no) for v_no in range(int(verse_start), int(verse_end) + 1)]
-
-        original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text, input_text)
-        html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, identities)
-        diff_table = html_differ.create_diff_html()
-
-    elif user_input1 and not user_input2:
-        preprocessed_input = textprocess.preprocess_input(user_input1)
+    if user_input1 and not user_input2:
+        preprocessed_input_lines = textprocess.preprocess_input(user_input1)
         query_result = QuranDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
         identities = [(surah_no, v_no) for v_no in range(int(verse_start), int(verse_end) + 1)]
 
-        original_text = [q.verse for q in query_result]
-        original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text, preprocessed_input)
+        original_text_lines = [q.verse for q in query_result]
+        original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text_lines, preprocessed_input_lines)
+
         html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, identities)
         diff_table = html_differ.create_diff_html()
 

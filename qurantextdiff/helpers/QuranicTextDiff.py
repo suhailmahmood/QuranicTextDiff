@@ -99,83 +99,48 @@ def compare(original_lines, input_lines):
 
 
 def _diff_to_tagged_words_diacritic(diffs):
-    # has to consider the case when the difflib's compare considers two strings to be completely different
-    # hence represents the situation as a 'deletion' and then an 'addition'.
-    # Can be done by either of these:
-    #       1. setting difflib to work with a custom ratio
-    #       2. determining in 'diffs' the words currently being compared, and then checking
-    #          with 'is_change_significant()' function
     original_line_tagged, input_line_tagged = [], []
     length = len(diffs)
-
     i = 0
     while i < length:
         if diffs[i].startswith('  '):
             original_line_tagged.append(('  ', diffs[i][2:]))
             input_line_tagged.append(('  ', diffs[i][2:]))
-        # elif diffs[i].startswith('+ '):
-        #     input_line_tagged.append(('+ ', diffs[i][2:]))
+        elif diffs[i].startswith('+ '):
+            input_line_tagged.append(('+ ', diffs[i][2:]))
         elif diffs[i].startswith('- '):
             try:
-                if diffs[i + 1].startswith('? ') and diffs[i + 2].startswith('+ '):
-                    print('first if')
-                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+2][2:])
-                    print('significant? {}'.format(significant_change))
-                    if significant_change:
-                        original_line_tagged.append(('? ', diffs[i][2:]))
-                        input_line_tagged.append(('? ', diffs[i + 2][2:]))
-                    else:
-                        original_line_tagged.append(('  ', diffs[i][2:]))
-                        input_line_tagged.append(('  ', diffs[i + 2][2:]))
-                    i += 2
+                if diffs[i + 1].startswith('? '):       # then diffs[i+2] starts with ('+ '), obviously
+                    changed = _is_change_significant(diffs[i][2:], diffs[i+2][2:])
+                    tag = '? ' if changed else '  '
+                    original_line_tagged.append((tag, diffs[i][2:]))
+                    input_line_tagged.append((tag, diffs[i+2][2:]))
+                    i += 3 if diffs[i+3].startswith('? ') else 2
+
                 elif diffs[i + 1].startswith('+ ') and diffs[i + 2].startswith('? '):
-                    print('first elif')
-                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
-                    print('significant? {}'.format(significant_change))
-
-                    if significant_change:
-                        original_line_tagged.append(('? ', diffs[i][2:]))
-                        input_line_tagged.append(('? ', diffs[i + 1][2:]))
-                    else:
-                        original_line_tagged.append(('  ', diffs[i][2:]))
-                        input_line_tagged.append(('  ', diffs[i + 1][2:]))
+                    changed = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                    tag = '? ' if changed else '  '
+                    original_line_tagged.append((tag, diffs[i][2:]))
+                    input_line_tagged.append((tag, diffs[i+1][2:]))
                     i += 2
-                else:
-                    print('else')
-                    significant_change = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
-                    print('significant? {}'.format(significant_change))
 
-                    if significant_change:
-                        original_line_tagged.append(('? ', diffs[i][2:]))
-                        input_line_tagged.append(('? ', diffs[i+1][2:]))
-                    else:
-                        original_line_tagged.append(('  ', diffs[i][2:]))
-                        input_line_tagged.append(('  ', diffs[i+1][2:]))
+                # CASE: which difflib considers as 'deletion' and then 'addition', rather than as 'change'
+                # as in the first two branches.
+                else:
+                    changed = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                    tag = '? ' if changed else '  '
+                    original_line_tagged.append((tag, diffs[i][2:]))
+                    input_line_tagged.append((tag, diffs[i+1][2:]))
+                    i += 1
             except IndexError:
                 original_line_tagged.append(('- ', diffs[i][2:]))
-        # this part is handled in the above elif branch
-        elif diffs[i].startswith('? '):
-            pass
-
         i += 1
-
     return original_line_tagged, input_line_tagged
 
 
 def _is_change_significant(original_text, input_text):
-
-    # original_text_without_diacritic = textprocess.normalize(original_text)
-    # input_text_without_diacritic = textprocess.normalize(input_text)
-
-    # if original_text_without_diacritic != input_text_without_diacritic:
-    #     return True
-
     original_text_normalized = textprocess.normalize(original_text)
     input_text_normalized = textprocess.normalize(input_text)
-
-    print(original_text_normalized)
-    print(input_text_normalized)
-    print('')
 
     differ = difflib.Differ()
     diffs = list(differ.compare([original_text_normalized], [input_text_normalized]))
@@ -187,7 +152,6 @@ def _is_change_significant(original_text, input_text):
             # this considers the diacritic version against which the input is compared to be "completely" diacritic
             if guide == '^' or guide == '+':
                 return True
-
     return False
 
 
