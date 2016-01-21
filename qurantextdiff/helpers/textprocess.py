@@ -76,7 +76,6 @@ def normalize(text):
     replacement_set = {
         unicodedata.lookup('ARABIC LETTER ALEF WASLA'): unicodedata.lookup('ARABIC LETTER ALEF'),
         unicodedata.lookup('ARABIC LETTER SUPERSCRIPT ALEF'): unicodedata.lookup('ARABIC LETTER ALEF'),
-        unicodedata.lookup('ARABIC LETTER SUPERSCRIPT ALEF'): unicodedata.lookup('ARABIC LETTER ALEF'),
         unicodedata.lookup('ARABIC LETTER ALEF') + unicodedata.lookup('ARABIC SUKUN'): unicodedata.lookup(
             'ARABIC LETTER ALEF'),
         unicodedata.lookup('ARABIC LETTER ALEF WITH MADDA ABOVE'): unicodedata.lookup('ARABIC LETTER ALEF')

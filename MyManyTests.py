@@ -144,10 +144,57 @@ def test_diff_result_diacritic():
                     print(unicodedata.name(word[index]))
 
 
+def check_presence_of_patterns():
+    import unicodedata as ud
+    import sqlite3
+
+    connection = sqlite3.connect('db.sqlite3')
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM quran_diacritic')
+    rows = cursor.fetchall()
+
+    ALIF = ud.lookup('ARABIC LETTER ALEF')
+    SUKUN = ud.lookup('ARABIC SUKUN')
+    WASLA = ud.lookup('ARABIC LETTER ALEF WASLA')
+    ALIF_SUPER = ud.lookup('ARABIC LETTER SUPERSCRIPT ALEF')
+    ALIF_MADDA = ud.lookup('ARABIC LETTER ALEF WITH MADDA ABOVE')
+    MEEM = ud.lookup('ARABIC LETTER MEEM')
+    SHADDA = ud.lookup('ARABIC SHADDA')
+    NOON = ud.lookup('ARABIC LETTER NOON')
+    HAMZA = ud.lookup('ARABIC LETTER HAMZA')
+    DAMMA = ud.lookup('ARABIC DAMMA')
+    WAW = ud.lookup('ARABIC LETTER WAW')
+    KASRA = ud.lookup('ARABIC KASRA')
+    KASRATAN = ud.lookup('ARABIC KASRATAN')
+    FATHA = ud.lookup('ARABIC FATHA')
+
+    # pattern = MEEM + SUKUN + ud.lookup('SPACE') + MEEM
+    # pattern = ALIF_MADDA + HAMZA
+    pattern = DAMMA + WAW + ALIF
+
+
+    # pattern = 'هُوَ'
+    pattern_count = 0
+    empty_sukun_count = 0
+    outfile = open('presence-count.txt', 'w', encoding='utf-8')
+    for row in rows:
+        index = row[3].find(pattern)
+        if index > -1:
+            pattern_count += 1
+            if row[3][index+1] != SUKUN:
+                empty_sukun_count += 1
+                print('{}:{}'.format(row[1], row[2]), file=outfile)
+                print(row[3], file=outfile)
+
+    print('Pattern count: {}'.format(pattern_count))
+    print('Empty sukun count: {}'.format(empty_sukun_count))
+
+
+
 if __name__ == '__main__':
     # check_difflib_ratio()
     # see_arabic_chars_unicode()
     # test_pre_processors()
     # test_remove_diacritic()
-    test_diff_result_diacritic()
-
+    # test_diff_result_diacritic()
+    check_presence_of_patterns()

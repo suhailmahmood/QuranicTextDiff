@@ -34,6 +34,10 @@ def details_view(request):
     #     original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text_lines, input_text)
     #     html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, identities)
     #     diff_table = html_differ.create_diff_html()
+    if not user_input1 and not user_input2:
+        query_result = QuranDiacritic.objects.filter(surah_no=surah_no, verse_no__range=(verse_start, verse_end))
+        verses = [('{}:{}'.format(q.surah_no, q.verse_no), '{}'.format(q.verse)) for q in query_result]
+        return render(request, 'qurantextdiff/details.html', {'qurantable': verses})
 
     if user_input1 and not user_input2:
         preprocessed_input_lines = textprocess.preprocess_input(user_input1)

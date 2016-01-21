@@ -7,7 +7,7 @@
     <title>Details</title>
     <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/css/bootstrap.min.css' %}">
     <style>
-        .diff-column {
+        .arabic {
             font-family: "Arabic Typesetting";
             font-size: 1.3em;
             width: 45%;
@@ -26,9 +26,14 @@
 {% endautoescape %}
 
 <br><br><br>
-{% autoescape off %}
-    {{ difftable_diacritic }}
-{% endautoescape %}
+<table style="width: 100%;" class="table table-striped table-bordered table-hover arabic">
+    {% for line in qurantable %}
+        <tr>
+        <td>{{ line.0 }}</td>
+        <td>{{ line.1 }}</td>
+        </tr>
+    {% endfor %}
+</table>
 
 </body>
 </html>

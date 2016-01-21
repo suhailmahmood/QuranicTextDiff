@@ -26,8 +26,8 @@ _span_tag_template = """<span class="{difftype}">{word}</span>"""
 _row_template = """\
     <tr>
         <td class="id-column">{id}</td>
-        <td class="diff diff-column">{original_data}</td>
-        <td class="diff diff-column">{input_data}</td>
+        <td class="arabic">{original_data}</td>
+        <td class="arabic">{input_data}</td>
     </tr>\
 """
 
@@ -194,3 +194,20 @@ def _diff_to_tagged_words(diffs):
         i += 1
 
     return original_line_tagged, input_line_tagged
+
+
+def print_unicode_names():
+    import unicodedata
+
+    arabic_string1 = 'آ'
+
+    for c in arabic_string1:
+        print('{}    {}'.format(unicodedata.name(c), c))
+
+
+def main():
+    s1 = ['']
+    s2 = ['']
+    compare(s1, s2)
+
+print_unicode_names()
