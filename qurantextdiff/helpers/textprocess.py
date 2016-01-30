@@ -93,7 +93,7 @@ def normalize(text):
         return _normalize_line(text)
 
 
-def preprocess_input(user_input):
+def preprocess_input_for_search(user_input):
     splitter = Splitter(user_input)
     user_input_lines = splitter.get_split_lines()
 

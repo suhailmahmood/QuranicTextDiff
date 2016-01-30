@@ -1,60 +1,60 @@
-{% load staticfiles %}
+{% extends 'qurantextdiff/base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Home</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/css/bootstrap.min.css' %}">
-    <script src="{% static 'qurantextdiff/js/bootstrap.min.js' %}"></script>
-</head>
-
-<body>
+{% block pagetitle %}
+    Home | QuranicTextDiff
+{% endblock %}
 
 
-<h1>Home page</h1>
+{% block bodyblock %}
+    <h1>QuranicTextDiff</h1>
 
-<form action="details/" method="post">
-    {% csrf_token %}
+    <form action="details/" method="post">
+        {% csrf_token %}
 
-    <label for="user_input1">Input text:</label>
-    <textarea name="user_input1"></textarea>
+        <label for="user_input1">Input text:</label>
+        <textarea name="user_input1"></textarea>
 
-    <label for="user_input2">Input text:</label>
-    <textarea name="user_input2"></textarea>
+        <label for="user_input2">Input text:</label>
+        <textarea name="user_input2"></textarea>
 
-    <p>
-        <label for="surah_no">Surah: </label>
-        <input type="text" name="surah_no" width="100">
-    </p>
+        <p>
+            <label for="surah_no">Surah: </label>
+            <input type="text" name="surah_no" width="100">
+        </p>
 
-    <p>
-        Verse <br>
-    <table>
-        <tr>
-            <td>
-                <label for="verse_start">From: </label>
-            </td>
-            <td>
-                <input type="text" name="verse_start"><br>
-            </td>
-        </tr>
+        <p>
+            Verse <br>
+        <table>
+            <tr>
+                <td>
+                    <label for="verse_start">From: </label>
+                </td>
+                <td>
+                    <input type="text" name="verse_start"><br>
+                </td>
+            </tr>
 
-        <tr>
-            <td>
-                <label for="verse_end">To: </label>
-            </td>
-            <td>
-                <input type="text" name="verse_end">
-            </td>
-        </tr>
-    </table>
-    </p>
+            <tr>
+                <td>
+                    <label for="verse_end">To: </label>
+                </td>
+                <td>
+                    <input type="text" name="verse_end">
+                </td>
+            </tr>
+        </table>
+        </p>
 
-    <input type="submit" value="Test run" class="btn btn-default">
-</form>
+        <input type="submit" value="Test run" class="btn btn-default">
+    </form>
+    <hr>
 
-<hr>
+    <a href="#" data-toggle="tooltip" title="Hooray!">Hover over me</a>
+    <a href="#" data-toggle="tooltip" data-placement="bottom" title="Hooray!">Top</a>
 
-</body>
-</html>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+{% endblock %}

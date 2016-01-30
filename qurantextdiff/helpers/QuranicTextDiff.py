@@ -15,15 +15,18 @@ lines.
 """
 
 import difflib
+
 import qurantextdiff.helpers.textprocess as textprocess
 
-_css_class_diff_added = 'alert-success'
-_css_class_diff_deleted = 'alert-danger'
-_css_class_diff_changed = 'alert-info'  # change these colors to improve readability
 
-_span_tag_template = """<span class="{difftype}">{word}</span>"""
+class HtmlCreator:
+    _css_class_diff_added = 'alert-success'
+    _css_class_diff_deleted = 'alert-danger'
+    _css_class_diff_changed = 'alert-info'  # change these colors to improve readability
 
-_row_template = """\
+    _span_tag_template = """<span class="{difftype}">{word}</span>"""
+
+    _row_template = """\
     <tr>
         <td class="id-column">{id}</td>
         <td class="arabic">{original_data}</td>
@@ -31,14 +34,12 @@ _row_template = """\
     </tr>\
 """
 
-_table_template = """\
+    _table_template = """\
 <table class="table table-striped table-bordered table-hover">
 {rows}
-</table>\
+</table>
 """
 
-
-class HtmlCreator:
     def __init__(self, original_lines_tagged, input_lines_tagged, identities):
         self.original_lines_tagged = original_lines_tagged
         self.input_lines_tagged = input_lines_tagged
@@ -52,12 +53,12 @@ class HtmlCreator:
             input_line_html = self._create_html_row(inp_ln_tgd)
             identity_string = '{}:{}'.format(identity[0], identity[1])
 
-            rows.append(_row_template.format(
+            rows.append(self._row_template.format(
                 id=identity_string,
                 original_data=original_line_html,
                 input_data=input_line_html)
             )
-        return _table_template.format(rows='\n'.join(rows))
+        return self._table_template.format(rows='\n'.join(rows))
 
     def _create_html_row(self, tagged_line):
         """
@@ -69,11 +70,14 @@ class HtmlCreator:
             if tagged_word[0] == "  ":
                 html_row.append(tagged_word[1])
             if tagged_word[0] == "+ ":
-                html_row.append(_span_tag_template.format(difftype=_css_class_diff_added, word=tagged_word[1]))
+                html_row.append(
+                    self._span_tag_template.format(difftype=self._css_class_diff_added, word=tagged_word[1]))
             if tagged_word[0] == "- ":
-                html_row.append(_span_tag_template.format(difftype=_css_class_diff_deleted, word=tagged_word[1]))
+                html_row.append(
+                    self._span_tag_template.format(difftype=self._css_class_diff_deleted, word=tagged_word[1]))
             if tagged_word[0] == "? ":
-                html_row.append(_span_tag_template.format(difftype=_css_class_diff_changed, word=tagged_word[1]))
+                html_row.append(
+                    self._span_tag_template.format(difftype=self._css_class_diff_changed, word=tagged_word[1]))
 
         return ' '.join(html_row)
 
@@ -106,34 +110,46 @@ def _diff_to_tagged_words_diacritic(diffs):
         if diffs[i].startswith('  '):
             original_line_tagged.append(('  ', diffs[i][2:]))
             input_line_tagged.append(('  ', diffs[i][2:]))
+
+        # CASE: a word not present in original line is 'added' to the input line
         elif diffs[i].startswith('+ '):
             input_line_tagged.append(('+ ', diffs[i][2:]))
         elif diffs[i].startswith('- '):
             try:
-                if diffs[i + 1].startswith('? '):       # then diffs[i+2] starts with ('+ '), obviously
-                    changed = _is_change_significant(diffs[i][2:], diffs[i+2][2:])
+                if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
+                    changed = _is_change_significant(diffs[i][2:], diffs[i + 2][2:])
                     tag = '? ' if changed else '  '
+                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
                     original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i+2][2:]))
-                    i += 3 if diffs[i+3].startswith('? ') else 2
+                    input_line_tagged.append((tag, diffs[i + 2][2:]))
+                    i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
 
-                elif diffs[i + 1].startswith('+ ') and diffs[i + 2].startswith('? '):
-                    changed = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
+                elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
+                    changed = _is_change_significant(diffs[i][2:], diffs[i + 1][2:])
                     tag = '? ' if changed else '  '
+                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
+
                     original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i+1][2:]))
+                    input_line_tagged.append((tag, diffs[i + 1][2:]))
                     i += 2
 
-                # CASE: which difflib considers as 'deletion' and then 'addition', rather than as 'change'
+                # CASE: which difflib considers as 'deletion' and 'addition', rather than as 'change'
                 # as in the first two branches.
-                else:
-                    changed = _is_change_significant(diffs[i][2:], diffs[i+1][2:])
+                # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
+                elif i + 1 < length and diffs[i + 1].startswith('+ '):
+                    changed = _is_change_significant(diffs[i][2:], diffs[i + 1][2:])
                     tag = '? ' if changed else '  '
+                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
                     original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i+1][2:]))
+                    input_line_tagged.append((tag, diffs[i + 1][2:]))
                     i += 1
+
+                # CASE: a word deleted from the original line
+                else:
+                    original_line_tagged.append(('- ', diffs[i][2:]))
             except IndexError:
-                original_line_tagged.append(('- ', diffs[i][2:]))
+                pass
         i += 1
     return original_line_tagged, input_line_tagged
 
@@ -155,47 +171,6 @@ def _is_change_significant(original_text, input_text):
     return False
 
 
-def _diff_to_tagged_words(diffs):
-    original_line_tagged, input_line_tagged = [], []
-    length = len(diffs)
-
-    # need to increment index according to situation, hence not iterating over `diffs`
-    # `itertools` could come in handy here, but that can wait for now.
-    i = 0
-    while i < length:
-        # '  ' means word in diffs[i] is same in both the lines
-        if diffs[i].startswith('  '):
-            original_line_tagged.append(('  ', diffs[i][2:]))
-            input_line_tagged.append(('  ', diffs[i][2:]))
-        # '+ ' means word in diffs[i] is an added word in the input line
-        elif diffs[i].startswith('+ '):
-            input_line_tagged.append(('+ ', diffs[i][2:]))
-        # '- ' means word in diffs[i] is deleted from the original line
-        # if diffs[i+1] or diffs[i+2] doesn't have '? ' tag, the word is "deleted" from the original line
-        # if however diffs[i+1] or diffs[i+2] has '? ' tag, the word is "changed"
-        elif diffs[i].startswith('- '):
-            try:
-                if diffs[i + 1].startswith('? ') and diffs[i + 2].startswith('+ '):
-                    original_line_tagged.append(('? ', diffs[i][2:]))
-                    input_line_tagged.append(('? ', diffs[i + 2][2:]))
-                    i += 2
-                elif diffs[i + 1].startswith('+ ') and diffs[i + 2].startswith('? '):
-                    original_line_tagged.append(('? ', diffs[i][2:]))
-                    input_line_tagged.append(('? ', diffs[i + 1][2:]))
-                    i += 2
-                else:
-                    original_line_tagged.append(('- ', diffs[i][2:]))
-            except IndexError:
-                original_line_tagged.append(('- ', diffs[i][2:]))
-        # this part is handled in the above elif branch
-        elif diffs[i].startswith('? '):
-            pass
-
-        i += 1
-
-    return original_line_tagged, input_line_tagged
-
-
 def print_unicode_names():
     import unicodedata
 
@@ -203,11 +178,3 @@ def print_unicode_names():
 
     for c in arabic_string1:
         print('{}    {}'.format(unicodedata.name(c), c))
-
-
-def main():
-    s1 = ['']
-    s2 = ['']
-    compare(s1, s2)
-
-print_unicode_names()

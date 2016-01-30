@@ -4,11 +4,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="qurantextdiff/bootstrap.css">
+    <title>
+        {% block pagetitle %}QuranicTextDiff{% endblock %}
+    </title>
+    <link rel="stylesheet" type="text/css" href="{% static "qurantextdiff/css/bootstrap.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "qurantextdiff/css/stylesheet.css" %}">
+    <script src="{% static "qurantextdiff/js/bootstrap.js" %}"></script>
+    <script src="{% static "qurantextdiff/js/jquery-2.2.0.js" %}"></script>
 </head>
 
 <body>
-    {% block body %} {% endblock %}
+    {% block bodyblock %}
+    {% endblock %}
 </body>
 </html>

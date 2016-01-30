@@ -190,6 +190,17 @@ def check_presence_of_patterns():
     print('Empty sukun count: {}'.format(empty_sukun_count))
 
 
+def test_IndexError():
+    l = [i+1 for i in range(5)]
+    copy = []
+    for i in range(10):
+        try:
+            copy.append(l[i])
+            if i == 1:
+                copy.append(l[i][0])
+        except Exception:
+            pass
+        print(copy)
 
 if __name__ == '__main__':
     # check_difflib_ratio()
@@ -197,4 +208,5 @@ if __name__ == '__main__':
     # test_pre_processors()
     # test_remove_diacritic()
     # test_diff_result_diacritic()
-    check_presence_of_patterns()
+    # check_presence_of_patterns()
+    test_IndexError()

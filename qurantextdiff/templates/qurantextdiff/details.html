@@ -1,39 +1,17 @@
-{% load staticfiles %}
+{% extends 'qurantextdiff/base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Details</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'qurantextdiff/css/bootstrap.min.css' %}">
-    <style>
-        .arabic {
-            font-family: "Arabic Typesetting";
-            font-size: 1.3em;
-            width: 45%;
-        }
+{% block bodyblock %}
+    {% autoescape off %}
+        {{ difftable }}
+    {% endautoescape %}
 
-        .id-column {
-            width: 10%;
-        }
-    </style>
-</head>
-
-<body>
-
-{% autoescape off %}
-    {{ difftable }}
-{% endautoescape %}
-
-<br><br><br>
-<table style="width: 100%;" class="table table-striped table-bordered table-hover arabic">
-    {% for line in qurantable %}
-        <tr>
-        <td>{{ line.0 }}</td>
-        <td>{{ line.1 }}</td>
-        </tr>
-    {% endfor %}
-</table>
-
-</body>
-</html>
+    <br><br><br>
+    <table style="width: 100%;" class="table table-striped table-bordered table-hover arabic">
+        {% for line in qurantable %}
+            <tr>
+                <td>{{ line.0 }}</td>
+                <td>{{ line.1 }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
