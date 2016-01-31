@@ -82,99 +82,91 @@ class HtmlCreator:
         return ' '.join(html_row)
 
 
-def compare(original_lines, input_lines):
-    """
-    <code>original_lines</code>: list(str), list of strings to be compared against, the target.
-    <code>input_lines</code>: list(str), list of strings which is compared to s1, the input.
-    return: list of tuples containing the each compared strings pair, with each word tagged.
-    The returned structure is shown in this scripts docstring
-    """
-    assert len(original_lines) == len(input_lines)
+class QuranicTextDiff:
+    def __init__(self, original_lines, input_lines):
+        assert len(original_lines) == len(input_lines)
+        self.original_lines = original_lines
+        self.input_lines = input_lines
+        self.input_lines_normalized = textprocess.normalize(input_lines)
 
-    differ = difflib.Differ()
-    original_lines_tagged, input_lines_tagged = [], []
+    def compare(self):
+        original_lines_tagged, input_lines_tagged = [], []
 
-    for original_line, input_line in zip(original_lines, input_lines):
-        diff = list(differ.compare(original_line.split(), input_line.split()))
-        olt, ilt = _diff_to_tagged_words_diacritic(diff)
-        original_lines_tagged.append(olt)
-        input_lines_tagged.append(ilt)
-    return original_lines_tagged, input_lines_tagged
+        for originalLine, inputLine in zip(self.original_lines, self.input_lines_normalized):
+            olt, ilt = self._diff_to_tagged_words(originalLine, inputLine)
+            original_lines_tagged.append(olt)
+            input_lines_tagged.append(ilt)
+        return original_lines_tagged, input_lines_tagged
 
+    def _diff_to_tagged_words(self, original_line, input_line):
+        differ = difflib.Differ()
 
-def _diff_to_tagged_words_diacritic(diffs):
-    original_line_tagged, input_line_tagged = [], []
-    length = len(diffs)
-    i = 0
-    while i < length:
-        if diffs[i].startswith('  '):
-            original_line_tagged.append(('  ', diffs[i][2:]))
-            input_line_tagged.append(('  ', diffs[i][2:]))
+        original_line_tagged, input_line_tagged = [], []
+        original_words, input_words = original_line.split(), input_line.split()
+        diffs = list(differ.compare(original_words, input_words))
+        length = len(diffs)
+        orig_index, inp_index = 0, 0
 
-        # CASE: a word not present in original line is 'added' to the input line
-        elif diffs[i].startswith('+ '):
-            input_line_tagged.append(('+ ', diffs[i][2:]))
-        elif diffs[i].startswith('- '):
-            try:
-                if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
-                    changed = _is_change_significant(diffs[i][2:], diffs[i + 2][2:])
-                    tag = '? ' if changed else '  '
-                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
-                    original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i + 2][2:]))
-                    i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
+        i = 0
+        while i < length:
+            if diffs[i].startswith('  '):
+                original_line_tagged.append(('  ', diffs[i][2:]))
+                input_line_tagged.append(('  ', diffs[i][2:]))
 
-                # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
-                elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
-                    changed = _is_change_significant(diffs[i][2:], diffs[i + 1][2:])
-                    tag = '? ' if changed else '  '
-                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
+            # CASE: a word not present in original line is 'added' to the input line
+            elif diffs[i].startswith('+ '):
+                input_line_tagged.append(('+ ', diffs[i][2:]))
+            elif diffs[i].startswith('- '):
+                try:
+                    if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
+                        tag = '? ' if changed else '  '
+                        print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
+                        original_line_tagged.append((tag, diffs[i][2:]))
+                        input_line_tagged.append((tag, diffs[i + 2][2:]))
+                        i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
 
-                    original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i + 1][2:]))
-                    i += 2
+                    # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
+                    elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        tag = '? ' if changed else '  '
+                        print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
 
-                # CASE: which difflib considers as 'deletion' and 'addition', rather than as 'change'
-                # as in the first two branches.
-                # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
-                elif i + 1 < length and diffs[i + 1].startswith('+ '):
-                    changed = _is_change_significant(diffs[i][2:], diffs[i + 1][2:])
-                    tag = '? ' if changed else '  '
-                    print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
-                    original_line_tagged.append((tag, diffs[i][2:]))
-                    input_line_tagged.append((tag, diffs[i + 1][2:]))
-                    i += 1
+                        original_line_tagged.append((tag, diffs[i][2:]))
+                        input_line_tagged.append((tag, diffs[i + 1][2:]))
+                        i += 2
 
-                # CASE: a word deleted from the original line
-                else:
-                    original_line_tagged.append(('- ', diffs[i][2:]))
-            except IndexError:
-                pass
-        i += 1
-    return original_line_tagged, input_line_tagged
+                    # CASE: which difflib considers as 'deletion' and 'addition', rather than as 'change'
+                    # as in the first two branches.
+                    # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
+                    elif i + 1 < length and diffs[i + 1].startswith('+ '):
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        tag = '? ' if changed else '  '
+                        print('Change significant for {} & {}?'.format(diffs[i][2:], diffs[i + 2][2:]), changed)
+                        original_line_tagged.append((tag, diffs[i][2:]))
+                        input_line_tagged.append((tag, diffs[i + 1][2:]))
+                        i += 1
 
+                    # CASE: a word deleted from the original line
+                    else:
+                        original_line_tagged.append(('- ', diffs[i][2:]))
+                except IndexError:
+                    pass
+            i += 1
+        return original_line_tagged, input_line_tagged
 
-def _is_change_significant(original_text, input_text):
-    original_text_normalized = textprocess.normalize(original_text)
-    input_text_normalized = textprocess.normalize(input_text)
+    def _is_change_significant(self, original_text, input_text):
+        original_text_normalized = textprocess.normalize(original_text)
+        input_text_normalized = textprocess.normalize(input_text)
 
-    differ = difflib.Differ()
-    diffs = list(differ.compare([original_text_normalized], [input_text_normalized]))
+        differ = difflib.Differ()
+        diffs = list(differ.compare([original_text_normalized], [input_text_normalized]))
 
-    guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
-    for i, guide_line in enumerate(guide_lines):
-        for index, guide in enumerate(guide_line):
-            # this is simplest check: if any diacritic is changed (^), or added (+)
-            # this considers the diacritic version against which the input is compared to be "completely" diacritic
-            if guide == '^' or guide == '+':
-                return True
-    return False
-
-
-def print_unicode_names():
-    import unicodedata
-
-    arabic_string1 = 'آ'
-
-    for c in arabic_string1:
-        print('{}    {}'.format(unicodedata.name(c), c))
+        guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
+        for i, guide_line in enumerate(guide_lines):
+            for index, guide in enumerate(guide_line):
+                # this is simplest check: if any diacritic is changed (^), or added (+)
+                # this considers the diacritic version against which the input is compared to be "completely" diacritic
+                if guide == '^' or guide == '+':
+                    return True
+        return False

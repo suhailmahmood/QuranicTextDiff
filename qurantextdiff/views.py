@@ -34,7 +34,8 @@ def details_view(request):
         identities = [(surah_no, v_no) for v_no in range(int(verse_start), int(verse_end) + 1)]
 
         original_text_lines = [q.verse for q in query_result]
-        original_text_tagged, input_text_tagged = QuranicTextDiff.compare(original_text_lines, preprocessed_input_lines)
+        quranicTextDiff = QuranicTextDiff.QuranicTextDiff(original_text_lines, preprocessed_input_lines)
+        original_text_tagged, input_text_tagged = quranicTextDiff.compare()
 
         html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, identities)
         diff_table = html_differ.create_diff_html()

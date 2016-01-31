@@ -1,3 +1,6 @@
+from tkinter.ttk import *
+
+
 def check_difflib_ratio():
     """
     Finds the minimum value of SequenceMatcher.ratio() for two strings such that Differ considers them as 'changed'.
@@ -109,7 +112,7 @@ def test_remove_diacritic():
             assert v_nodiac == v_diac_cleaned
         except AssertionError:
             mismatches.append('{}:{}\n{}\n{}\n\n'.format(surah, verse, v_nodiac, v_diac_cleaned))
-            # print(mismatches[-1])
+            print(mismatches[-1])
 
     with open('mismatches.txt', 'w', encoding='utf-8') as outfile:
         outfile.write(''.join(mismatches))
@@ -202,11 +205,51 @@ def test_IndexError():
             pass
         print(copy)
 
+
+def test_normalize_function():
+    import sqlite3
+    from difflib import Differ, SequenceMatcher
+    import qurantextdiff.helpers.textprocess as textprocess
+
+    connection = sqlite3.connect('db.sqlite3')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM quran_diacritic')
+    diacritic_verses = []
+    surah_no = []
+    verse_no = []
+    for row in cursor.fetchall():
+        surah_no.append(row[1])
+        verse_no.append(row[2])
+        diacritic_verses.append(row[3])
+
+    cursor.execute('SELECT * FROM quran_non_diacritic')
+    non_diacritic_verses = [row[3] for row in cursor.fetchall()]
+
+    diacritic_verses_normalized = textprocess.normalize(textprocess.remove_diacritics(diacritic_verses))
+
+    mismatches = []
+    mismatch_chars = []
+
+    for s_no, v_no, diac, ndiac in zip(surah_no, verse_no, diacritic_verses_normalized, non_diacritic_verses):
+        try:
+            assert diac == ndiac
+        except AssertionError:
+            for c1, c2 in zip(diac, ndiac):
+                if c1 != c2:
+                    if c1 not in mismatch_chars:
+                        mismatch_chars.append(c1)
+                    if c2 not in mismatch_chars:
+                        mismatch_chars.append(c2)
+
+            mismatches.append((s_no, v_no, diac, ndiac))
+
+    file = open('mismatches.txt', 'w', encoding='utf-8')
+    for s, v, d, n in mismatches:
+        print('{}:{}\n{}\n{}\n'.format(s, v, d, n), file=file)
+
+    print(len(mismatch_chars))
+    print('\n'.join(mismatch_chars))
+
 if __name__ == '__main__':
-    # check_difflib_ratio()
-    # see_arabic_chars_unicode()
-    # test_pre_processors()
-    # test_remove_diacritic()
-    # test_diff_result_diacritic()
-    # check_presence_of_patterns()
-    test_IndexError()
+    test_normalize_function()
