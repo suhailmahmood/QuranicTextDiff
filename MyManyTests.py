@@ -1,4 +1,4 @@
-from tkinter.ttk import *
+﻿from tkinter.ttk import *
 
 
 def check_difflib_ratio():
@@ -251,5 +251,50 @@ def test_normalize_function():
     print(len(mismatch_chars))
     print('\n'.join(mismatch_chars))
 
+
+def check_presence_of_dhalik():
+    import sqlite3
+    # pattern_d = 'ذَلِك'
+    # pattern_d = 'ذَٰلِك'
+    pattern_d = 'ذَالِك'
+    pattern_n = 'ذلك'
+
+    connection = sqlite3.connect('db.sqlite3')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM quran_diacritic')
+    diacritic_verses = []
+    s_no_d = []
+    v_no_d = []
+    for row in cursor.fetchall():
+        s_no_d.append(row[1])
+        v_no_d.append(row[2])
+        diacritic_verses.append(row[3])
+
+    cursor.execute('SELECT * FROM quran_non_diacritic')
+    non_diacritic_verses = []
+    s_no_n = []
+    v_no_n = []
+    for row in cursor.fetchall():
+        s_no_n.append(row[1])
+        v_no_n.append(row[2])
+        non_diacritic_verses.append(row[3])
+
+    counter = 0
+    for s_d, s_n, v_d, v_n, verse_d, verse_n in zip(s_no_d, s_no_n, v_no_d, v_no_n, diacritic_verses, non_diacritic_verses):
+        verse_d = str(verse_d)
+        if verse_d.find(pattern_d) > -1:
+            try:
+                assert verse_n.find(pattern_n) > -1
+                assert s_d == s_n
+                assert v_d == v_n
+                counter += 1
+            except AssertionError:
+                assert s_d == s_n
+                assert v_d == v_n
+                print('{}:{}\n{}\n{}'.format(s_d, v_d, verse_d, verse_n))
+    print(counter)
+
+
 if __name__ == '__main__':
-    test_normalize_function()
+    check_presence_of_dhalik()

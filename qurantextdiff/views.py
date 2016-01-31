@@ -44,7 +44,9 @@ def details_view(request):
     if not surah_no and not verse_start and not verse_end:
         preprocessed_input1 = textprocess.preprocess_input_for_search(user_input1)
         preprocessed_input2 = textprocess.preprocess_input_for_search(user_input2)
-        original_text_tagged, input_text_tagged = QuranicTextDiff.compare(preprocessed_input1, preprocessed_input2)
+
+        quranicTextDiff = QuranicTextDiff.QuranicTextDiff(preprocessed_input1, preprocessed_input2)
+        original_text_tagged, input_text_tagged = quranicTextDiff.compare()
         html_differ = QuranicTextDiff.HtmlCreator(original_text_tagged, input_text_tagged, [(0, 0)])
         diff_table = html_differ.create_diff_html()
 
