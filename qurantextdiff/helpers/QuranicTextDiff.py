@@ -15,7 +15,7 @@ lines.
 """
 
 import difflib
-
+import unicodedata
 import qurantextdiff.helpers.textprocess as textprocess
 
 
@@ -92,20 +92,22 @@ class QuranicTextDiff:
     def compare(self):
         original_lines_tagged, input_lines_tagged = [], []
 
-        for lineNo, (originalLine, inputLine) in enumerate(zip(self.original_lines, self.input_lines_normalized)):
-            olt, ilt = self._diff_to_tagged_words(originalLine, inputLine, lineNo)
+        for lineNo, (origLn, inpLnNrmlsed) in enumerate(zip(self.original_lines, self.input_lines_normalized)):
+            olt, ilt = self._diff_to_tagged_words(origLn, inpLnNrmlsed, lineNo)
             original_lines_tagged.append(olt)
             input_lines_tagged.append(ilt)
         return original_lines_tagged, input_lines_tagged
 
-    def _diff_to_tagged_words(self, original_line, input_line, line_no):
+    def _diff_to_tagged_words(self, original_line, input_line_normalised, line_no):
         differ = difflib.Differ()
         original_line_tagged, input_line_tagged = [], []
 
         original_words = original_line.split()
         input_words = self.input_lines[line_no].split()
-        input_words_normalized = input_line.split()
-        diffs = list(differ.compare(original_words, input_words_normalized))
+        input_words_normalised = input_line_normalised.split()
+
+        # NOTE: normalised input line is compared against the original line
+        diffs = list(differ.compare(original_words, input_words_normalised))
         length = len(diffs)
         orig_index, inp_index = 0, 0
 
@@ -124,21 +126,24 @@ class QuranicTextDiff:
             elif diffs[i].startswith('- '):
                 try:
                     if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
-                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
+                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
                         tag = '? ' if changed else '  '
+
                         original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index]))
+                        input_line_tagged.append((tag, input_words[inp_index], changes))
+
                         i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
                         orig_index += 1
                         inp_index += 1
 
                     # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
                     elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
-                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
                         tag = '? ' if changed else '  '
 
                         original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index]))
+                        input_line_tagged.append((tag, input_words[inp_index], changes))
+
                         i += 2
                         orig_index += 1
                         inp_index += 1
@@ -147,11 +152,12 @@ class QuranicTextDiff:
                     # as in the first two branches.
                     # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
                     elif i + 1 < length and diffs[i + 1].startswith('+ '):
-                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
                         tag = '? ' if changed else '  '
 
                         original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index]))
+                        input_line_tagged.append((tag, input_words[inp_index], changes))
+
                         i += 1
                         orig_index += 1
                         inp_index += 1
@@ -168,31 +174,31 @@ class QuranicTextDiff:
     def _is_change_significant(self, original_text, input_text):
         # still using normalization on the original text. With enough modification of the original text,
         # this won't be necessary
-        original_text_cleaned = textprocess.remove_diacritics(textprocess.normalize(original_text))
-        input_text_cleaned = textprocess.remove_diacritics(textprocess.normalize(input_text))
-        changed = False
-
-        if original_text_cleaned != input_text_cleaned:
-            changed = True
-            print('Returing True for:')
-            print('{}\n{}'.format(original_text_cleaned, input_text_cleaned))
-            return 2
+        original_text_normalised = textprocess.normalize(original_text)
+        input_text_normalised = textprocess.normalize(input_text)
 
         differ = difflib.Differ()
-        original_text_normalized, input_text_normalized = \
-            textprocess.normalize(original_text), textprocess.normalize(input_text)
-        diffs = list(differ.compare([original_text_normalized], [input_text_normalized]))
+        diffs = list(differ.compare([original_text_normalised], [input_text_normalised]))
 
         guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
-        i = 0
-        for i, guide_line in enumerate(guide_lines):
-            for index, guide in enumerate(guide_line):
-                # this is simplest check: if any diacritic is changed (^), or added (+)
-                # this considers the diacritic version against which the input is compared to be "completely" diacritic
-                if guide == '^' or guide == '+':
-                    print('Returning True for:')
-                    print('{}\n{}'.format(original_text_normalized, input_text_normalized))
-                    return True
+
+        changes = {
+            'added': [], 'changed': [], 'deleted': []
+        }
+        for guide_line in guide_lines:
+            for i, c in enumerate(guide_line):
+                if c == '+':
+                    changes['added'].append(i)
+                elif c == '?':
+                    changes['changed'].append(i)
+                elif c == '-' and unicodedata.category(c) != 'Mn':
+                    changes['deleted'].append(i)
+
+        if changes['added'] or changes['deleted'] or changes['changed']:
+            print('Returning False for:')
+            print('{}\n{}'.format(original_text_normalised, input_text_normalised))
+            return True, changes
+
         print('Returning False for:')
-        print('{}\n{}'.format(original_text_normalized, input_text_normalized))
-        return False
+        print('{}\n{}'.format(original_text_normalised, input_text_normalised))
+        return False, None
