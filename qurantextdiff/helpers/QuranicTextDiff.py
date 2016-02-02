@@ -124,24 +124,21 @@ class QuranicTextDiff:
             elif diffs[i].startswith('- '):
                 try:
                     if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
-                        change_level = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
-                        orig_tag, inp_tag = \
-                            ('- ', '+ ') if change_level == 2 else ('? ', '? ') if change_level == 1 else ('  ', '  ')
-
-                        original_line_tagged.append((orig_tag, original_words[orig_index]))
-                        input_line_tagged.append((inp_tag, input_words[inp_index]))
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
+                        tag = '? ' if changed else '  '
+                        original_line_tagged.append((tag, original_words[orig_index]))
+                        input_line_tagged.append((tag, input_words[inp_index]))
                         i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
                         orig_index += 1
                         inp_index += 1
 
                     # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
                     elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
-                        change_level = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
-                        orig_tag, inp_tag = \
-                            ('- ', '+ ') if change_level == 2 else ('? ', '? ') if change_level == 1 else ('  ', '  ')
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((orig_tag, original_words[orig_index]))
-                        input_line_tagged.append((inp_tag, input_words[inp_index]))
+                        original_line_tagged.append((tag, original_words[orig_index]))
+                        input_line_tagged.append((tag, input_words[inp_index]))
                         i += 2
                         orig_index += 1
                         inp_index += 1
@@ -150,12 +147,11 @@ class QuranicTextDiff:
                     # as in the first two branches.
                     # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
                     elif i + 1 < length and diffs[i + 1].startswith('+ '):
-                        change_level = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
-                        orig_tag, inp_tag = \
-                            ('- ', '+ ') if change_level == 2 else ('? ', '? ') if change_level == 1 else ('  ', '  ')
+                        changed = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((orig_tag, original_words[orig_index]))
-                        input_line_tagged.append((inp_tag, input_words[inp_index]))
+                        original_line_tagged.append((tag, original_words[orig_index]))
+                        input_line_tagged.append((tag, input_words[inp_index]))
                         i += 1
                         orig_index += 1
                         inp_index += 1
@@ -174,9 +170,11 @@ class QuranicTextDiff:
         # this won't be necessary
         original_text_cleaned = textprocess.remove_diacritics(textprocess.normalize(original_text))
         input_text_cleaned = textprocess.remove_diacritics(textprocess.normalize(input_text))
+        changed = False
 
         if original_text_cleaned != input_text_cleaned:
-            print('Returing 2 for:')
+            changed = True
+            print('Returing True for:')
             print('{}\n{}'.format(original_text_cleaned, input_text_cleaned))
             return 2
 
@@ -192,9 +190,9 @@ class QuranicTextDiff:
                 # this is simplest check: if any diacritic is changed (^), or added (+)
                 # this considers the diacritic version against which the input is compared to be "completely" diacritic
                 if guide == '^' or guide == '+':
-                    print('Returning 1 for:')
+                    print('Returning True for:')
                     print('{}\n{}'.format(original_text_normalized, input_text_normalized))
-                    return 1
-        print('Returning 0 for:')
+                    return True
+        print('Returning False for:')
         print('{}\n{}'.format(original_text_normalized, input_text_normalized))
-        return 0
+        return False
