@@ -9,8 +9,14 @@
     </title>
     <link rel="stylesheet" type="text/css" href="{% static "qurantextdiff/css/bootstrap.css" %}">
     <link rel="stylesheet" type="text/css" href="{% static "qurantextdiff/css/stylesheet.css" %}">
-    <script src="{% static "qurantextdiff/js/bootstrap.js" %}"></script>
     <script src="{% static "qurantextdiff/js/jquery-2.2.0.js" %}"></script>
+    <script src="{% static "qurantextdiff/js/bootstrap.js" %}"></script>
+
+    <script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+    </script>
 </head>
 
 <body>
