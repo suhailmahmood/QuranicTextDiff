@@ -16,6 +16,7 @@ lines.
 
 import difflib
 import unicodedata
+
 import qurantextdiff.helpers.textprocess as textprocess
 
 
@@ -24,7 +25,9 @@ class HtmlCreator:
     _css_class_diff_deleted = 'alert-danger'
     _css_class_diff_changed = 'alert-info'  # change these colors to improve readability
 
-    _span_tag_template = """<span class="{difftype}">{word}</span>"""
+    _span_tag_template = '<span class="{difftype}">{word}</span>'
+    _span_tag_template_tooltip = '<span class="{difftype}" data-toggle="tooltip" data-placement="bottom" \
+title="{tooltip}">{word}</span>'
 
     _row_template = """\
     <tr>
@@ -65,21 +68,43 @@ class HtmlCreator:
         Creates html for a single row in any of the two data columns (original or input)
         """
         html_row = []
-        for tagged_word in tagged_line:
-            # each "tagged_word" is a tuple: (tag, word)
-            if tagged_word[0] == "  ":
-                html_row.append(tagged_word[1])
-            if tagged_word[0] == "+ ":
-                html_row.append(
-                    self._span_tag_template.format(difftype=self._css_class_diff_added, word=tagged_word[1]))
-            if tagged_word[0] == "- ":
-                html_row.append(
-                    self._span_tag_template.format(difftype=self._css_class_diff_deleted, word=tagged_word[1]))
-            if tagged_word[0] == "? ":
-                html_row.append(
-                    self._span_tag_template.format(difftype=self._css_class_diff_changed, word=tagged_word[1]))
 
+        for t in tagged_line:
+            # each 't' is a tuple: (tag, content)
+            # when tag is '? ', content is a tuple, content[0] is the word, content[1] a dict of changes
+            # in other cases, content is the word
+            tag, content = t[0], t[1]
+            if tag == "  ":
+                html_row.append(content)
+            if tag == "+ ":
+                html_row.append(
+                    self._span_tag_template.format(difftype=self._css_class_diff_added, word=content))
+            if tag == "- ":
+                html_row.append(
+                    self._span_tag_template.format(difftype=self._css_class_diff_deleted, word=content))
+            if tag == "? ":
+                if isinstance(content, tuple):
+                    html_row.append(
+                        self._span_tag_template_tooltip.format(difftype=self._css_class_diff_changed, word=content[0],
+                                                               tooltip=self._create_tooltip(content)))
+                else:
+                    html_row.append(
+                        self._span_tag_template.format(difftype=self._css_class_diff_changed, word=content))
         return ' '.join(html_row)
+
+    def _create_tooltip(self, content):
+        changes = content[1]
+        tooltip = ''
+        if changes.get('deleted'):
+            tooltip += 'Deleted characters at positions: {}\n'.format(
+                ', '.join([str(i + 1) for i in changes.get('deleted')]))
+        if changes.get('added'):
+            tooltip += 'Added characters at positions: {}\n'.format(
+                ', '.join([str(i + 1) for i in changes.get('added')]))
+        if changes.get('changed'):
+            tooltip += 'Changed characters at positions: {}'.format(
+                ', '.join([str(i + 1) for i in changes.get('changed')]))
+        return tooltip
 
 
 class QuranicTextDiff:
@@ -92,8 +117,8 @@ class QuranicTextDiff:
     def compare(self):
         original_lines_tagged, input_lines_tagged = [], []
 
-        for lineNo, (origLn, inpLnNrmlsed) in enumerate(zip(self.original_lines, self.input_lines_normalized)):
-            olt, ilt = self._diff_to_tagged_words(origLn, inpLnNrmlsed, lineNo)
+        for lineNo, (origLn, inpLnNormalised) in enumerate(zip(self.original_lines, self.input_lines_normalized)):
+            olt, ilt = self._diff_to_tagged_words(origLn, inpLnNormalised, lineNo)
             original_lines_tagged.append(olt)
             input_lines_tagged.append(ilt)
         return original_lines_tagged, input_lines_tagged
@@ -106,7 +131,6 @@ class QuranicTextDiff:
         input_words = self.input_lines[line_no].split()
         input_words_normalised = input_line_normalised.split()
 
-        # NOTE: normalised input line is compared against the original line
         diffs = list(differ.compare(original_words, input_words_normalised))
         length = len(diffs)
         orig_index, inp_index = 0, 0
@@ -130,7 +154,8 @@ class QuranicTextDiff:
                         tag = '? ' if changed else '  '
 
                         original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index], changes))
+                        input_line_tagged.append(
+                            (tag, (input_words[inp_index], changes) if changed else input_words[inp_index]))
 
                         i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
                         orig_index += 1
@@ -139,10 +164,12 @@ class QuranicTextDiff:
                     # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
                     elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
                         changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+
                         tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index], changes))
+                        original_line_tagged.append((tag, original_words[orig_index], None))
+                        input_line_tagged.append(
+                            (tag, (input_words[inp_index], changes) if changes else input_words[inp_index]))
 
                         i += 2
                         orig_index += 1
@@ -155,8 +182,9 @@ class QuranicTextDiff:
                         changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
                         tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((tag, original_words[orig_index]))
-                        input_line_tagged.append((tag, input_words[inp_index], changes))
+                        original_line_tagged.append((tag, (original_words[orig_index], None)))
+                        input_line_tagged.append(
+                            (tag, (input_words[inp_index], changes) if changes else input_words[inp_index]))
 
                         i += 1
                         orig_index += 1
@@ -195,10 +223,16 @@ class QuranicTextDiff:
                     changes['deleted'].append(i)
 
         if changes['added'] or changes['deleted'] or changes['changed']:
-            print('Returning False for:')
-            print('{}\n{}'.format(original_text_normalised, input_text_normalised))
+            printDebug('Returning True for:')
+            printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
             return True, changes
 
-        print('Returning False for:')
-        print('{}\n{}'.format(original_text_normalised, input_text_normalised))
+        printDebug('Returning False for:')
+        printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
         return False, None
+
+
+def printDebug(s):
+    debug = False
+    if debug:
+        print(s)

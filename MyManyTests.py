@@ -1,7 +1,4 @@
-﻿from tkinter.ttk import *
-
-
-def check_difflib_ratio():
+﻿def check_difflib_ratio():
     """
     Finds the minimum value of SequenceMatcher.ratio() for two strings such that Differ considers them as 'changed'.
     """
@@ -139,7 +136,7 @@ def test_diff_result_diacritic():
     for i in range(len(diffs)):
         if diffs[i].startswith('? '):
             guide_word = diffs[i][2:]
-            word = diffs[i-1][2:]
+            word = diffs[i - 1][2:]
             for index in range(len(guide_word)):
                 guide = guide_word[index]
                 if guide == '-' or guide == '^' or guide == '+':
@@ -176,25 +173,18 @@ def check_presence_of_patterns():
     pattern = DAMMA + WAW + ALIF
 
 
-    # pattern = 'هُوَ'
     pattern_count = 0
-    empty_sukun_count = 0
     outfile = open('presence-count.txt', 'w', encoding='utf-8')
     for row in rows:
         index = row[3].find(pattern)
         if index > -1:
             pattern_count += 1
-            if row[3][index+1] != SUKUN:
-                empty_sukun_count += 1
-                print('{}:{}'.format(row[1], row[2]), file=outfile)
-                print(row[3], file=outfile)
 
     print('Pattern count: {}'.format(pattern_count))
-    print('Empty sukun count: {}'.format(empty_sukun_count))
 
 
 def test_IndexError():
-    l = [i+1 for i in range(5)]
+    l = [i + 1 for i in range(5)]
     copy = []
     for i in range(10):
         try:
@@ -208,7 +198,6 @@ def test_IndexError():
 
 def test_normalize_function():
     import sqlite3
-    from difflib import Differ, SequenceMatcher
     import qurantextdiff.helpers.textprocess as textprocess
 
     connection = sqlite3.connect('db.sqlite3')
@@ -226,30 +215,32 @@ def test_normalize_function():
     cursor.execute('SELECT * FROM quran_non_diacritic')
     non_diacritic_verses = [row[3] for row in cursor.fetchall()]
 
-    diacritic_verses_normalized = textprocess.normalize(textprocess.remove_diacritics(diacritic_verses))
+    diacritic_verses_normalized = textprocess.normalize(diacritic_verses)
 
     mismatches = []
     mismatch_chars = []
 
-    for s_no, v_no, diac, ndiac in zip(surah_no, verse_no, diacritic_verses_normalized, non_diacritic_verses):
+    for s_no, v_no, diacNormal, diac in zip(surah_no, verse_no, diacritic_verses_normalized, diacritic_verses):
         try:
-            assert diac == ndiac
+            assert diacNormal == diac
         except AssertionError:
-            for c1, c2 in zip(diac, ndiac):
+            for c1, c2 in zip(diacNormal, diac):
                 if c1 != c2:
                     if c1 not in mismatch_chars:
                         mismatch_chars.append(c1)
                     if c2 not in mismatch_chars:
                         mismatch_chars.append(c2)
 
-            mismatches.append((s_no, v_no, diac, ndiac))
+            mismatches.append((s_no, v_no, diacNormal, diac))
 
     file = open('mismatches.txt', 'w', encoding='utf-8')
     for s, v, d, n in mismatches:
         print('{}:{}\n{}\n{}\n'.format(s, v, d, n), file=file)
-
+    import unicodedata as ud
     print(len(mismatch_chars))
     print('\n'.join(mismatch_chars))
+    for mc in mismatch_chars:
+        print(ud.name(mc))
 
 
 def check_presence_of_dhalik():
@@ -281,7 +272,8 @@ def check_presence_of_dhalik():
         non_diacritic_verses.append(row[3])
 
     counter = 0
-    for s_d, s_n, v_d, v_n, verse_d, verse_n in zip(s_no_d, s_no_n, v_no_d, v_no_n, diacritic_verses, non_diacritic_verses):
+    for s_d, s_n, v_d, v_n, verse_d, verse_n in zip(s_no_d, s_no_n, v_no_d, v_no_n, diacritic_verses,
+                                                    non_diacritic_verses):
         verse_d = str(verse_d)
         if verse_d.find(pattern_d) > -1:
             try:
@@ -297,4 +289,4 @@ def check_presence_of_dhalik():
 
 
 if __name__ == '__main__':
-    check_presence_of_dhalik()
+    pass
