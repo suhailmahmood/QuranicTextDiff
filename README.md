@@ -6,6 +6,6 @@ do* when it is complete!) is check Quranic quotes in any web page for its correc
 version in the backend.
 
 This is my project for my Undergraduate final year. I am doing this in django, and principal workhorse of this application
-is python's [difflib](http://docs.python.org/3.5/library/difflib.html#module-difflib) libraray.
+is python's [difflib](http://docs.python.org/3.5/library/difflib.html#module-difflib) library.
 
 Suggestions/advices are highly solicited!
