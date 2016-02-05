@@ -70,10 +70,11 @@ title="{tooltip}">{word}</span>'
         html_row = []
 
         for t in tagged_line:
-            # each 't' is a tuple: (tag, content)
-            # when tag is '? ', content is a tuple, content[0] is the word, content[1] a dict of changes
-            # in other cases, content is the word
+            # each 't' is a tuple: (tag, word [, word_pair])
+            # when tag is '? ', word_pair is present for input line, in all other cases it is not passed
+
             tag, content = t[0], t[1]
+            has_tooltip = True if len(t) == 3 else False
             if tag == "  ":
                 html_row.append(content)
             if tag == "+ ":
@@ -83,28 +84,51 @@ title="{tooltip}">{word}</span>'
                 html_row.append(
                     self._span_tag_template.format(difftype=self._css_class_diff_deleted, word=content))
             if tag == "? ":
-                if isinstance(content, tuple):
+                if has_tooltip:
                     html_row.append(
-                        self._span_tag_template_tooltip.format(difftype=self._css_class_diff_changed, word=content[0],
-                                                               tooltip=self._create_tooltip(content)))
+                        self._span_tag_template_tooltip.format(difftype=self._css_class_diff_changed, word=content,
+                                                               tooltip=self._create_tooltip(t[2][0], t[2][1])))
                 else:
                     html_row.append(
                         self._span_tag_template.format(difftype=self._css_class_diff_changed, word=content))
         return ' '.join(html_row)
 
-    def _create_tooltip(self, content):
-        changes = content[1]
-        tooltip = ''
-        if changes.get('deleted'):
-            tooltip += 'Deleted characters at positions: {}\n'.format(
-                ', '.join([str(i + 1) for i in changes.get('deleted')]))
-        if changes.get('added'):
-            tooltip += 'Added characters at positions: {}\n'.format(
-                ', '.join([str(i + 1) for i in changes.get('added')]))
-        if changes.get('changed'):
-            tooltip += 'Changed characters at positions: {}'.format(
-                ', '.join([str(i + 1) for i in changes.get('changed')]))
-        return tooltip
+    def _create_tooltip(self, s1, s2):
+        # still using normalisation on the original text. With enough modification of the original text,
+        # this won't be necessary
+        # inp_word in already normalised
+        tooltip = []
+        inserts, deletes, replaces, displacements = [], [], [], []
+
+        sm = difflib.SequenceMatcher(None, textprocess.normalize(s1), s2)
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == 'insert':
+                inserts.append([s2[j1:j2], i1, False])
+            elif tag == 'delete':
+                deletes.append([s1[i1:i2], i1, False])
+            elif tag == 'replace':
+                replaces.append([s1[i1:i2], s2[j1:j2], i1])
+
+        for d in deletes:
+            for i in inserts:
+                if d[0] == i[0] and d[2] is False and i[2] is False:
+                    displacements.append((d[0], d[1], i[1]))
+                    d[2] = True
+                    i[2] = True
+                    break
+
+        for chrs, f, t in displacements:
+            tooltip.append('Displaced {} from {} to {}'.format(chrs, f + 1, t + 1))
+        for d in deletes:
+            if d[2] is False:
+                tooltip.append('Deleted {} at {}'.format(d[0], d[1]))
+        for i in inserts:
+            if i[2] is False:
+                tooltip.append('Inserted {} at {}'.format(i[0], i[1]))
+        for r in replaces:
+            tooltip.append('Replaced {} with {} at {}'.format(r[0], r[1], r[2]))
+
+        return '\n'.join(tooltip)
 
 
 class QuranicTextDiff:
@@ -148,14 +172,17 @@ class QuranicTextDiff:
                 input_line_tagged.append(('+ ', input_words[inp_index]))
                 inp_index += 1
             elif diffs[i].startswith('- '):
+                orig_word = diffs[i][2:]
                 try:
                     if diffs[i + 1].startswith('? '):  # then diffs[i+2] starts with ('+ '), obviously
-                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 2][2:])
+                        inp_word_norm = diffs[i + 2][2:]
+                        changed = self._is_change_significant(orig_word, inp_word_norm)
                         tag = '? ' if changed else '  '
 
                         original_line_tagged.append((tag, original_words[orig_index]))
                         input_line_tagged.append(
-                            (tag, (input_words[inp_index], changes) if changed else input_words[inp_index]))
+                            (tag, input_words[inp_index],
+                             (orig_word, inp_word_norm) if changed else input_words[inp_index]))
 
                         i += 3 if i + 3 < length and diffs[i + 3].startswith('? ') else 2
                         orig_index += 1
@@ -163,13 +190,15 @@ class QuranicTextDiff:
 
                     # checking i+2<length before diffs[i+2].startswith.. ==> to enable short-circuit
                     elif diffs[i + 1].startswith('+ ') and i + 2 < length and diffs[i + 2].startswith('? '):
-                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        inp_word_norm = diffs[i + 1][2:]
+                        changed = self._is_change_significant(orig_word, inp_word_norm)
 
                         tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((tag, original_words[orig_index], None))
+                        original_line_tagged.append((tag, original_words[orig_index]))
                         input_line_tagged.append(
-                            (tag, (input_words[inp_index], changes) if changes else input_words[inp_index]))
+                            (tag, input_words[inp_index],
+                             (orig_word, inp_word_norm) if changed else input_words[inp_index]))
 
                         i += 2
                         orig_index += 1
@@ -179,12 +208,14 @@ class QuranicTextDiff:
                     # as in the first two branches.
                     # checking i+1<length before diffs[i+1].startswith.. ==> to enable short-circuit
                     elif i + 1 < length and diffs[i + 1].startswith('+ '):
-                        changed, changes = self._is_change_significant(diffs[i][2:], diffs[i + 1][2:])
+                        inp_word_norm = diffs[i + 1][2:]
+                        changed = self._is_change_significant(diffs[i][2:], inp_word_norm)
                         tag = '? ' if changed else '  '
 
-                        original_line_tagged.append((tag, (original_words[orig_index], None)))
+                        original_line_tagged.append((tag, original_words[orig_index]))
                         input_line_tagged.append(
-                            (tag, (input_words[inp_index], changes) if changes else input_words[inp_index]))
+                            (tag, input_words[inp_index],
+                             (orig_word, inp_word_norm) if changed else input_words[inp_index]))
 
                         i += 1
                         orig_index += 1
@@ -210,26 +241,21 @@ class QuranicTextDiff:
 
         guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
 
-        changes = {
-            'added': [], 'changed': [], 'deleted': []
-        }
+        changed = False
         for guide_line in guide_lines:
             for i, c in enumerate(guide_line):
-                if c == '+':
-                    changes['added'].append(i)
-                elif c == '?':
-                    changes['changed'].append(i)
-                elif c == '-' and unicodedata.category(c) != 'Mn':
-                    changes['deleted'].append(i)
+                # unicodedata.category(c)) is wrong
+                if c == '+' or c == '?' or (c == '-' and unicodedata.category(c)) != 'Mn':
+                    changed = True
 
-        if changes['added'] or changes['deleted'] or changes['changed']:
+        if changed:
             printDebug('Returning True for:')
             printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
-            return True, changes
+            return True
 
         printDebug('Returning False for:')
         printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
-        return False, None
+        return False
 
 
 def printDebug(s):

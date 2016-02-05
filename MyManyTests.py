@@ -172,7 +172,6 @@ def check_presence_of_patterns():
     # pattern = ALIF_MADDA + HAMZA
     pattern = DAMMA + WAW + ALIF
 
-
     pattern_count = 0
     outfile = open('presence-count.txt', 'w', encoding='utf-8')
     for row in rows:
@@ -288,5 +287,77 @@ def check_presence_of_dhalik():
     print(counter)
 
 
+def check_grouped_opcodes():
+    s1 = 'one two'
+    s2 = 'oen tow'
+    from difflib import SequenceMatcher
+    sm = SequenceMatcher(None, s1, s2)
+    opcodes = sm.get_opcodes()
+
+    inserts, deletes, replaces, equals = [], [], [], []
+
+    for op in opcodes:
+        print(op, end='\t')
+        tag, i1, i2, j1, j2 = op
+        if tag == 'insert':
+            inserts.append(op)
+            print('{} at {}'.format(s2[j1:j2], i1))
+        elif tag == 'delete':
+            deletes.append(op)
+            print('{} at {}'.format(s1[i1:i2], i1))
+        elif tag == 'replace':
+            replaces.append(op)
+            print('{} with {}'.format(s1[i1:i2], s2[j1:j2]))
+        else:
+            equals.append(op)
+            print('{} equ {}'.format(s1[i1:i2], s2[j1:j2]))
+
+    lists = [inserts, deletes, replaces, equals]
+
+    # for op in lists:
+    #     if op:
+    #         print(op[0][0])
+    #     for x in op:
+    #         print(x)
+
+    inserts, deletes, replaces, equals = [], [], [], []
+
+    for tag, i1, i2, j1, j2 in opcodes:
+        if tag == 'insert':
+            inserts.append([s2[j1:j2], i1, False])
+        elif tag == 'delete':
+            deletes.append([s1[i1:i2], i1, False])
+        elif tag == 'replace':
+            replaces.append((tag, i1, i2, j1, j2))
+        else:
+            equals.append((tag, i1, i2, j1, j2))
+
+    lists = [deletes, inserts]
+    print('printing...')
+    for d in deletes:
+        print(d)
+    for i in inserts:
+        print(i)
+    print('done...')
+
+    moves = []
+
+    for dele in deletes:
+        print(dele)
+        for ins in inserts:
+            print(ins)
+            if dele[0] == ins[0] and dele[2] == False and ins[2] == False:
+                moves.append((dele[0], dele[1], ins[1]))
+                dele[2] = True
+                ins[2] = True
+                break
+
+    for chrs, f, t in moves:
+        print('Moved {} from {} to {}'.format(chrs, f, t))
+
+
+
 if __name__ == '__main__':
-    pass
+    check_grouped_opcodes()
+
+
