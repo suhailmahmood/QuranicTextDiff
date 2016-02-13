@@ -8,6 +8,11 @@
     width: 10%;
 }
 
+.tooltip {
+    font-family: "Arabic Typesetting";
+    font-size: 1em;
+}
+
 /* Tooltip container */
 /*
 .tooltip {

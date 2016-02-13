@@ -12,7 +12,7 @@ import unicodedata
 class Splitter:
     _delimiters_names = [
         'ARABIC END OF AYAH', 'ARABIC PLACE OF SAJDAH', 'ARABIC FULL STOP',
-        'ARABIC COMMA', 'COMMA', 'TURNED COMMA', 'REVERSED COMMA',
+        'ARABIC COMMA', 'COMMA', 'TURNED COMMA', # 'REVERSED COMMA', # 'REVERSED COMMA' doesn't work with python 3.4
         'ARABIC SEMICOLON', 'SEMICOLON', 'TURNED SEMICOLON', 'REVERSED SEMICOLON'
     ]
 
