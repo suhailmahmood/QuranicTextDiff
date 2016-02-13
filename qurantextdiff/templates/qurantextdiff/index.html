@@ -6,55 +6,26 @@
 
 
 {% block bodyblock %}
-    <h1>QuranicTextDiff</h1>
 
-    <form action="details/" method="post">
-        {% csrf_token %}
+    <div class="container">
+        <div class="jumbotron">
+            <h1>QuranicTextDiff</h1>
 
-        <label for="user_input1">Input text:</label>
-        <textarea name="user_input1"></textarea>
+            <p>Verify authenticity of Quranic texts found in webpages/forums!</p>
+        </div>
+    </div>
 
-        <label for="user_input2">Input text:</label>
-        <textarea name="user_input2"></textarea>
 
-        <p>
-            <label for="surah_no">Surah: </label>
-            <input type="text" name="surah_no" width="100">
-        </p>
+    <div class="container">
+        <h3>Enter Quranic texts for comparison</h3>
 
-        <p>
-            Verse <br>
-        <table>
-            <tr>
-                <td>
-                    <label for="verse_start">From: </label>
-                </td>
-                <td>
-                    <input type="text" name="verse_start"><br>
-                </td>
-            </tr>
+        <form role="form" action="details/" method="post">
+            {% csrf_token %}
+            <label for="comment">Input:</label>
+            <textarea class="form-control" rows="5" name="user_input"></textarea>
 
-            <tr>
-                <td>
-                    <label for="verse_end">To: </label>
-                </td>
-                <td>
-                    <input type="text" name="verse_end">
-                </td>
-            </tr>
-        </table>
-        </p>
+            <button type="submit" class="btn btn-default">Compare</button>
+        </form>
+    </div>
 
-        <input type="submit" value="Test run" class="btn btn-default">
-    </form>
-    <hr>
-
-    <a href="#" data-toggle="tooltip" title="Hooray!">Hover over me</a>
-    <a href="#" data-toggle="tooltip" data-placement="bottom" title="Hooray!">Top</a>
-
-    <script>
-        $(document).ready(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
 {% endblock %}
