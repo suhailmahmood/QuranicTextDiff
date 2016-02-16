@@ -12,7 +12,7 @@ import unicodedata
 class Splitter:
     _delimiters_names = [
         'ARABIC END OF AYAH', 'ARABIC PLACE OF SAJDAH', 'ARABIC FULL STOP',
-        'ARABIC COMMA', 'COMMA', 'TURNED COMMA', # 'REVERSED COMMA', # 'REVERSED COMMA' doesn't work with python 3.4
+        'ARABIC COMMA', 'COMMA', 'TURNED COMMA',  # 'REVERSED COMMA', # 'REVERSED COMMA' doesn't work with python 3.4
         'ARABIC SEMICOLON', 'SEMICOLON', 'TURNED SEMICOLON', 'REVERSED SEMICOLON'
     ]
 
@@ -66,10 +66,7 @@ def remove_diacritics(text):
     if isinstance(text, str):
         return _remove_diacritics(text)
     if isinstance(text, list):
-        input_lines_without_diacritics = []
-        for s in text:
-            input_lines_without_diacritics.append(_remove_diacritics(s))
-        return input_lines_without_diacritics
+        return [_remove_diacritics(s) for s in text]
 
 
 def normalize(text):
@@ -87,13 +84,16 @@ def normalize(text):
             line = line.replace(key, replacement_set.get(key))
         return line
 
+    if isinstance(text, str):
+        return _normalize_line(text)
     if isinstance(text, list):
         return [_normalize_line(s) for s in text]
-    elif isinstance(text, str):
-        return _normalize_line(text)
 
 
 def preprocess_input_for_search(user_input):
+    if isinstance(user_input, list):
+        user_input = '\n'.join(user_input)
+
     splitter = Splitter(user_input)
     user_input_lines = splitter.get_split_lines()
 
