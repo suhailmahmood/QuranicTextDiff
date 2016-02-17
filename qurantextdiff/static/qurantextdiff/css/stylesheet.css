@@ -13,6 +13,9 @@
     font-size: 1em;
 }
 
+.deleted {
+    text-decoration: line-through;
+}
 /* Tooltip container */
 /*
 .tooltip {

@@ -230,35 +230,18 @@ class QuranicTextDiff:
             i += 1
         return original_line_tagged, input_line_tagged
 
-    def _is_change_significant(self, original_text, input_text):
+    def _is_change_significant(self, original_word, input_word):
         # still using normalization on the original text. With enough modification of the original text,
         # this won't be necessary
-        original_text_normalised = textprocess.normalize(original_text)
-        input_text_normalised = textprocess.normalize(input_text)
+        original_word_normalised = textprocess.normalize(original_word)
+        input_word_normalised = textprocess.normalize(input_word)
 
         differ = difflib.Differ()
-        diffs = list(differ.compare([original_text_normalised], [input_text_normalised]))
+        diffs = list(differ.compare([original_word_normalised], [input_word_normalised]))
 
-        guide_lines = [diff[2:] for diff in diffs if diff.startswith('? ')]
-
-        changed = False
-        for guide_line in guide_lines:
-            for i, c in enumerate(guide_line):
-                # unicodedata.category(c)) is wrong
-                if c == '+' or c == '?' or (c == '-' and unicodedata.category(c)) != 'Mn':
-                    changed = True
-
-        if changed:
-            printDebug('Returning True for:')
-            printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
-            return True
-
-        printDebug('Returning False for:')
-        printDebug('{}\n{}'.format(original_text_normalised, input_text_normalised))
+        for i, diff in enumerate(diffs):
+            if diff.startswith('? '):
+                for j, c in enumerate(diff[2:]):
+                    if c == '+' or c == '?' or (c == '-' and unicodedata.category(diffs[i-1][j]) != 'Mn'):
+                        return True
         return False
-
-
-def printDebug(s):
-    debug = False
-    if debug:
-        print(s)

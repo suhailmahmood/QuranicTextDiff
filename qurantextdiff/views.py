@@ -57,6 +57,8 @@ def search(input_lines):
 def get_candidate_verses(fromURL):
     candidate_verses = []
     arabic_texts = urlprocess.urldata(fromURL)
+
+    print('Collecting candidate verses...', end=' ')
     for i, line in enumerate(arabic_texts):
         cleaned_line = remove_diacritics(normalize(line))
         obj = QuranNonDiacritic.objects.filter(verse__search=cleaned_line)
@@ -67,5 +69,5 @@ def get_candidate_verses(fromURL):
             if ratio >= 0.75:
                 candidate_verses.append(line)
 
-    print('...returning candidate_verses')
+    print('Done')
     return candidate_verses
