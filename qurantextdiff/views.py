@@ -1,10 +1,11 @@
 import difflib
 
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 
 from qurantextdiff.helpers.textprocess import *
 from .helpers import QuranicTextDiff, urlprocess
 from .models import QuranNonDiacritic, QuranDiacritic
+from .forms import QuranDiacriticSearchForm
 
 
 def index_view(request):
@@ -58,16 +59,24 @@ def get_candidate_verses(fromURL):
     candidate_verses = []
     arabic_texts = urlprocess.urldata(fromURL)
 
-    print('Collecting candidate verses...', end=' ')
+    # print('Collecting candidate verses...', end=' ')
     for i, line in enumerate(arabic_texts):
         cleaned_line = remove_diacritics(normalize(line))
         obj = QuranNonDiacritic.objects.filter(verse__search=cleaned_line)
         if obj:
             orig_verse = obj[0].verse
+            print(cleaned_line)
+            print(orig_verse)
             sm = difflib.SequenceMatcher(None, orig_verse, cleaned_line)
             ratio = sm.ratio()
             if ratio >= 0.75:
                 candidate_verses.append(line)
 
-    print('Done')
+    # print('Done')
     return candidate_verses
+
+
+def qurandiacritic(request):
+    form = QuranDiacriticSearchForm(request.GET)
+    notes = form.search()
+    return render_to_response('notes.html', {'notes': notes})

@@ -5,40 +5,48 @@ import guess_language
 
 
 def urldata(url):
-    print('Opening page...', end=' ')
+    # print('Opening page...', end=' ')
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     html = urllib.request.urlopen(req).read()
-    print('Done')
+    # print('Done')
 
-    print('Parsing...', end=' ')
+    # print('Parsing...', end=' ')
     soup = BeautifulSoup(html, 'html.parser')
-    print('Done')
+    # print('Done')
     # print(soup.prettify())
 
-    print('Finding all text...', end=' ')
+    # print('Finding all text...', end=' ')
     text_findAll = soup.findAll(text=True)
-    print('Done')
+    # print('Done')
 
-    print('Filtering visible texts...', end=' ')
+    # print('Filtering visible texts...', end=' ')
     visible_texts = []
     for line in filter(visible, text_findAll):
         line = line.strip()
         if line:
             visible_texts.append(line)
-    print('Done')
+    # print('Done')
 
-    print('Filtering arabic texts...', end=' ')
+    # print('Filtering arabic texts...', end=' ')
     arabic = []
     for l in visible_texts:
         if guess_language.guess_language(l) == 'ar':
             arabic.append(l)
-    print('Done')
+    # print('Done')
     return arabic
 
 
 def visible(element):
-    if element.parent.name in ['style', 'script', '[document]', 'head', 'title']:
+    if element.parent.name in ['style', 'script', 'document', 'head', 'title']:
         return False
     elif re.match('<!--.*-->', str(element)):
         return False
+    elif re.match('\n', str(element)):
+        return False
     return True
+
+
+def is_arabic(s):
+    if any(0x0600 <= ord(c) <= 0x06ff for c in s):
+        return True
+    return False

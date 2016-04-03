@@ -1,0 +1,3 @@
+{{ object.surah_no }}
+{{ object.verse_no }}
+{{ object.verse }}

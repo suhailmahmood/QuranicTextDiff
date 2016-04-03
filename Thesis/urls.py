@@ -19,5 +19,6 @@ from django.contrib import admin
 urlpatterns = [
     url(r'^qurantextdiff/', include('qurantextdiff.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^search/', include('haystack.urls')),
 ]
 
