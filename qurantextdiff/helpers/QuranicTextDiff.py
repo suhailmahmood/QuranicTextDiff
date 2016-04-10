@@ -242,6 +242,9 @@ class QuranicTextDiff:
         for i, diff in enumerate(diffs):
             if diff.startswith('? '):
                 for j, c in enumerate(diff[2:]):
-                    if c == '+' or c == '?' or (c == '-' and unicodedata.category(diffs[i-1][j]) != 'Mn'):
+                    char_category = unicodedata.category(diffs[i - 1][j])
+                    if (char_category != 'Mn') and (c == '+' or c == '?' or c == '-'):
+                        return True
+                    elif (char_category == 'Mn') and (c == '+' or c == '?'):
                         return True
         return False
