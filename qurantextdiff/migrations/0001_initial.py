@@ -13,37 +13,29 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='QuranDiacritic',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', primary_key=True, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', auto_created=True, serialize=False)),
                 ('surah_no', models.IntegerField()),
                 ('verse_no', models.IntegerField()),
                 ('verse', models.TextField()),
+                ('checksum', models.TextField()),
             ],
             options={
                 'db_table': 'quran_diacritic',
+                'managed': True,
             },
         ),
         migrations.CreateModel(
             name='QuranNonDiacritic',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', primary_key=True, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', auto_created=True, serialize=False)),
                 ('surah_no', models.IntegerField()),
                 ('verse_no', models.IntegerField()),
                 ('verse', models.TextField()),
+                ('checksum', models.TextField()),
             ],
             options={
                 'db_table': 'quran_non_diacritic',
-            },
-        ),
-        migrations.CreateModel(
-            name='QuranUthmani',
-            fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', primary_key=True, auto_created=True)),
-                ('surah_no', models.IntegerField()),
-                ('verse_no', models.IntegerField()),
-                ('verse', models.TextField()),
-            ],
-            options={
-                'db_table': 'quran_uthmani',
+                'managed': True,
             },
         ),
     ]

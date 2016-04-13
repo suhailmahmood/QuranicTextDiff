@@ -1,4 +1,5 @@
 import difflib
+import hashlib
 
 from django.shortcuts import render
 
@@ -48,9 +49,10 @@ def search(input_lines):
         row = highest_match_row(rows, line)
 
         sno, vno = row.surah_no, row.verse_no
-        diac_verse = QuranDiacritic.objects.filter(surah_no=sno, verse_no=vno)[0].verse
+        diac_row_obj = QuranDiacritic.objects.filter(surah_no=sno, verse_no=vno)[0]
+        check_checksum(diac_row_obj)
 
-        diacritic_verses.append(diac_verse)
+        diacritic_verses.append(diac_row_obj.verse)
         identities.append((row.surah_no, row.verse_no))
 
     return diacritic_verses, identities
@@ -84,3 +86,13 @@ def highest_match_row(rows, line):
             idx = i
 
     return rows[idx]
+
+
+def check_checksum(row_obj):
+    calc_checksum = hashlib.md5(row_obj.verse.encode('utf-8')).hexdigest()
+    try:
+        assert row_obj.checksum == calc_checksum
+    except AssertionError:
+        print('Assertion Failed: checksum mismatch for surah_no: {}, verse_no: {}'.format(row_obj.surah_no,
+                                                                                          row_obj.verse_no))
+        print('Checksums:\nOriginal checksum: {}\nNew checksum: {}'.format(row_obj.checksum, calc_checksum))
