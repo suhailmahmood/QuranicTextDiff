@@ -356,6 +356,11 @@ def check_grouped_opcodes():
         print('Moved {} from {} to {}'.format(chrs, f, t))
 
 
+def check_is_change_significant():
+    import qurantextdiff.helpers.QuranicTextDiff as QD
+
+    # QD.QuranicTextDiff._is_change_significant(frm, to)
+
 
 if __name__ == '__main__':
     check_grouped_opcodes()

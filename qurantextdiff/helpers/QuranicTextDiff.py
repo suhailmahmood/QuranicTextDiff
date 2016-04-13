@@ -242,9 +242,15 @@ class QuranicTextDiff:
         for i, diff in enumerate(diffs):
             if diff.startswith('? '):
                 for j, c in enumerate(diff[2:]):
-                    char_category = unicodedata.category(diffs[i - 1][j])
-                    if (char_category != 'Mn') and (c == '+' or c == '?' or c == '-'):
+                    if not is_diacritic(diffs[i - 1][j]) and c in '+-^':
+                        print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
                         return True
-                    elif (char_category == 'Mn') and (c == '+' or c == '?'):
+                    elif is_diacritic(diffs[i - 1][j]) and c in '+^':
+                        print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
+
                         return True
         return False
+
+
+def is_diacritic(chr):
+    return True if unicodedata.category(chr) == 'Mn' else False
