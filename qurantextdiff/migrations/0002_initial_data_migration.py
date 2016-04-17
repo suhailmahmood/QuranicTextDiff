@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import hashlib
+import binascii
 
 from django.db import migrations
 
@@ -36,8 +36,9 @@ def load_initial_data(apps, schema_editor):
                 continue
             else:
                 verse = line.replace('\n', '')
-                checksum = hashlib.md5(verse.encode('utf-8')).hexdigest()
-                objs.append(model(surah_no=surah_counter, verse_no=verse_counter, verse=verse, checksum=checksum))
+                orig_crc = binascii.crc32(verse.encode())
+                objs.append(model(surah_no=surah_counter, verse_no=verse_counter, verse=verse, orig_verse_crc=orig_crc,
+                                  input_verse=verse, input_verse_crc=orig_crc))
                 verse_counter += 1
 
         model.objects.bulk_create(objs)

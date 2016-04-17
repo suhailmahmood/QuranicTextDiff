@@ -56,7 +56,7 @@ class Cleaner:
 
     def _clean_input_lines(self):
         for idx, line in enumerate(self._input_lines):
-            self._input_lines[idx] = ''.join([c for c in line if c not in self._junk_characters_set])
+            self._input_lines[idx] = ''.join(c for c in line if c not in self._junk_characters_set)
 
 
 def remove_diacritics(text):

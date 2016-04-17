@@ -9,7 +9,9 @@ class QuranNonDiacritic(models.Model):
     surah_no = models.IntegerField()
     verse_no = models.IntegerField()
     verse = models.TextField()
-    checksum = models.TextField()
+    orig_verse_crc = models.BigIntegerField()
+    input_verse = models.TextField()
+    input_verse_crc = models.BigIntegerField()
 
 
 class QuranDiacritic(models.Model):
@@ -20,4 +22,6 @@ class QuranDiacritic(models.Model):
     surah_no = models.IntegerField()
     verse_no = models.IntegerField()
     verse = models.TextField()
-    checksum = models.TextField()
+    orig_verse_crc = models.BigIntegerField()
+    input_verse = models.TextField()
+    input_verse_crc = models.BigIntegerField()

@@ -17,7 +17,9 @@ class Migration(migrations.Migration):
                 ('surah_no', models.IntegerField()),
                 ('verse_no', models.IntegerField()),
                 ('verse', models.TextField()),
-                ('checksum', models.TextField()),
+                ('orig_verse_crc', models.BigIntegerField()),
+                ('input_verse', models.TextField()),
+                ('input_verse_crc', models.BigIntegerField()),
             ],
             options={
                 'db_table': 'quran_diacritic',
@@ -31,7 +33,9 @@ class Migration(migrations.Migration):
                 ('surah_no', models.IntegerField()),
                 ('verse_no', models.IntegerField()),
                 ('verse', models.TextField()),
-                ('checksum', models.TextField()),
+                ('orig_verse_crc', models.BigIntegerField()),
+                ('input_verse', models.TextField()),
+                ('input_verse_crc', models.BigIntegerField()),
             ],
             options={
                 'db_table': 'quran_non_diacritic',

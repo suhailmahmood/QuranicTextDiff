@@ -1,0 +1,58 @@
+{% extends 'qurantextdiff/base.html' %}
+
+{% block bodyblock %}
+    <div class="container">
+        <h3>Select surah no. and verse no. to check</h3>
+
+        <form role="form" action="" method="post">
+            {% csrf_token %}
+            <label>Select type:</label>
+            <input class="radio-inline" type="radio" name="type" value="diacritic" checked="checked">Diacritic
+            <input class="radio-inline" type="radio" name="type" value="non_diacritic">Non-Diacritic<br>
+
+            <label>Surah no.:</label>
+            <input type="number" min="0" step="1" max="114" class="form-control" rows="1" name="surah_no"/>
+
+            <label>Verse no.:</label>
+            <input type="number" min="1" step="1" class="form-control" rows="1" name="verse_no"/>
+
+            <button type="submit" class="btn btn-default" name="check">Check</button>
+        </form>
+    </div>
+
+    <br><br>
+
+    <div class="container" style="display: {{ display_chosen_verse }}">
+        <h3>Selected verse:</h3>
+
+        <form role="form" action="" method="post">
+            {% csrf_token %}
+
+            <textarea name="verse_area" class="arabic">{{ chosen_verse }}</textarea><br>
+            <button type="submit" class="btn btn-danger" name="finject">Inject fault</button>
+        </form>
+    </div>
+
+    <div class="container" style="display: {{ display_results }}">
+
+        <h3>Results after fault injection:</h3>
+        <label>Original crc:</label>
+
+        <p>{{ orig_checksum }}</p>
+        <label>Changed crc</label>
+
+        <p>{{ changed_checksum }}</p>
+
+    </div>
+
+
+{% endblock %}
+
+
+{#multiple form in same page#}
+
+{#<form method="post" action="">#}
+{#    {{ obj_form.as_p }}#}
+{#    <button name="action1" value="1" type="submit">#}
+{#    <button name="action2" value="1" type="submit">#}
+{#</form>#}

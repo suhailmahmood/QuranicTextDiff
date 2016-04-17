@@ -26,15 +26,15 @@ class HtmlCreator:
     _css_class_diff_changed = 'alert-info'  # change these colors to improve readability
 
     _span_tag_template = '<span class="{difftype}">{word}</span>'
-    _span_tag_template_tooltip = '<span class="{difftype}" data-toggle="tooltip" data-placement="bottom" \
+    _span_tag_template_tooltip = '<span class="{difftype}" data-html="true" data-toggle="tooltip" data-placement="bottom" \
 title="{tooltip}">{word}</span>'
 
     _row_template = """\
-    <tr>
-        <td class="id-column">{id}</td>
-        <td class="arabic">{original_data}</td>
-        <td class="arabic">{input_data}</td>
-    </tr>\
+    <{row_type}>
+        <{row_data_type} class="id-column">{id}</{row_data_type}>
+        <{row_data_type} class="arabic verse_column">{original_data}</{row_data_type}>
+        <{row_data_type} class="arabic verse_column">{input_data}</{row_data_type}>
+    </{row_type}>\
 """
 
     _table_template = """\
@@ -49,18 +49,20 @@ title="{tooltip}">{word}</span>'
         self.identities = identities
 
     def create_diff_html(self):
-        rows = []
+        rows = [
+            self._row_template.format(row_type='thead', row_data_type='th', id='Id.', original_data='Original verses',
+                                      input_data='Input verses'
+                                      )
+        ]
         for orig_ln_tgd, inp_ln_tgd, identity in zip(self.original_lines_tagged, self.input_lines_tagged,
                                                      self.identities):
             original_line_html = self._create_html_row(orig_ln_tgd)
             input_line_html = self._create_html_row(inp_ln_tgd)
             identity_string = '{}:{}'.format(identity[0], identity[1])
 
-            rows.append(self._row_template.format(
-                id=identity_string,
-                original_data=original_line_html,
-                input_data=input_line_html)
-            )
+            rows.append(self._row_template.format(row_type='tr', row_data_type='td', id=identity_string,
+                                                  original_data=original_line_html, input_data=input_line_html)
+                        )
         return self._table_template.format(rows='\n'.join(rows))
 
     def _create_html_row(self, tagged_line):
@@ -128,7 +130,7 @@ title="{tooltip}">{word}</span>'
         for r in replaces:
             tooltip.append('Replaced {} with {} at {}'.format(r[0], r[1], r[2]))
 
-        return '\n'.join(tooltip)
+        return '<br>'.join(tooltip)
 
 
 class QuranicTextDiff:
@@ -243,10 +245,10 @@ class QuranicTextDiff:
             if diff.startswith('? '):
                 for j, c in enumerate(diff[2:]):
                     if not is_diacritic(diffs[i - 1][j]) and c in '+-^':
-                        print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
+                        # print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
                         return True
                     elif is_diacritic(diffs[i - 1][j]) and c in '+^':
-                        print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
+                        # print('i:{} returning True for ({}, {}) in {}'.format(i, c, diffs[i-1][j], diffs[i-1][2:]))
 
                         return True
         return False
